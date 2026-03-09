@@ -1,0 +1,5 @@
+docker run \
+  -v trivy-cache:/root/.cache/trivy \
+  aquasec/trivy image \
+  --severity CRITICAL,HIGH \
+  sagikazarmark/dvwa:latest 2>&1 | more
