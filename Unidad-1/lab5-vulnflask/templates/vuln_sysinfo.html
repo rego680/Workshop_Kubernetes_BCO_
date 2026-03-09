@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<title>Info Sistema - VulnFlask</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: 'Courier New', monospace; background: #0a0a0a; color: #00ff41; min-height: 100vh; padding: 40px; }
+  .container { max-width: 800px; margin: 0 auto; }
+  h2 { margin-bottom: 5px; }
+  .hint { color: #666; font-size: 0.7rem; margin-bottom: 20px; }
+  .section { background: #111; border: 1px solid #222; border-radius: 8px; padding: 15px; margin-bottom: 15px; }
+  .section h3 { color: #00aaff; margin-bottom: 10px; font-size: 0.9rem; }
+  .kv { margin-bottom: 6px; font-size: 0.8rem; }
+  .kv .key { color: #888; }
+  .kv .val { color: #00ff41; }
+  .env-table { width: 100%; font-size: 0.75rem; }
+  .env-table td { padding: 3px 8px; border-bottom: 1px solid #1a1a1a; word-break: break-all; }
+  .env-table .env-key { color: #ffaa00; width: 30%; }
+  .env-table .env-val { color: #ccc; }
+  pre { background: #0d0d0d; padding: 10px; border-radius: 4px; font-size: 0.75rem; overflow-x: auto; color: #aaa; }
+  .back { color: #555; text-decoration: none; font-size: 0.8rem; }
+  .back:hover { color: #00ff41; }
+</style>
+</head>
+<body>
+<div class="container">
+  <h2>Informacion del Sistema</h2>
+  <div class="hint">Vuln: Information Disclosure &mdash; Expone hostname, IP, env vars, procesos</div>
+
+  <div class="section">
+    <h3>General</h3>
+    <div class="kv"><span class="key">Hostname:</span> <span class="val">{{ info.hostname }}</span></div>
+    <div class="kv"><span class="key">IP:</span> <span class="val">{{ info.ip }}</span></div>
+    <div class="kv"><span class="key">User:</span> <span class="val">{{ info.user }}</span></div>
+    <div class="kv"><span class="key">UID:</span> <span class="val">{{ info.uid }}</span></div>
+    <div class="kv"><span class="key">CWD:</span> <span class="val">{{ info.cwd }}</span></div>
+    <div class="kv"><span class="key">Kernel:</span> <span class="val">{{ info.kernel }}</span></div>
+  </div>
+
+  <div class="section">
+    <h3>Variables de Entorno</h3>
+    <table class="env-table">
+      {% for k, v in info.env_vars.items() %}
+      <tr><td class="env-key">{{ k }}</td><td class="env-val">{{ v }}</td></tr>
+      {% endfor %}
+    </table>
+  </div>
+
+  <div class="section">
+    <h3>Procesos</h3>
+    <pre>{{ info.processes }}</pre>
+  </div>
+
+  <br><a class="back" href="/">Volver al menu</a>
+</div>
+</body>
+</html>
