@@ -1,101 +1,122 @@
-# Pacman Docker Lab
+# Lab Pac-Man - Docker
 
-Juego clasico de Pac-Man desplegado en un contenedor Docker con Nginx Alpine.
+Juego clasico de **Pac-Man** (HTML5/Canvas) desplegado en un contenedor Docker con Nginx Alpine.
 
-![Pacman Docker Lab](screenshot.png)
+```
+ ╔══════════════════════════════════════╗
+ ║            PAC-MAN                   ║
+ ║   SCORE: 1280    HIGH: 5000          ║
+ ║  ┌─────────────────────────────┐     ║
+ ║  │ · · · · · █ · · · · · · ·  │     ║
+ ║  │ · ██ · █████ · ██ · █ · ·  │     ║
+ ║  │ · · · · · · · · · · · · ·  │     ║
+ ║  │ · ██ · █ ═════ █ · ██ · ·  │     ║
+ ║  │ · · · · ║ ◉ ◉ ║ · · · · ·│     ║
+ ║  │ · ██ · █ ═════ █ · ██ · · │     ║
+ ║  │ · · · ◗ · · · · · ᗣ · · · │     ║
+ ║  │ ● ██ · █████ · ██ · █ · ● │     ║
+ ║  │ · · · · · █ · · · · · · ·  │     ║
+ ║  └─────────────────────────────┘     ║
+ ║   ◗ = Pac-Man  ᗣ = Fantasma         ║
+ ║   · = Punto    ● = Power Pellet     ║
+ ╚══════════════════════════════════════╝
+```
 
-| Propiedad        | Valor                          |
-|------------------|--------------------------------|
-| **Imagen base**  | `nginx:alpine`                 |
-| **Puerto**       | `8082:80`                      |
-| **Tamano**       | ~40 MB                         |
-| **Tipo**         | Aplicacion web estatica (HTML5/JS/CSS) |
-| **Health check** | `http://localhost:8082/health`  |
+| Propiedad        | Valor                                  |
+|------------------|----------------------------------------|
+| **Imagen base**  | `nginx:alpine`                         |
+| **Puerto**       | `8082` (host) → `80` (contenedor)      |
+| **Tamano aprox.**| ~40 MB                                 |
+| **Tecnologia**   | HTML5 Canvas + JavaScript vanilla       |
+| **Health check** | `GET /health` → `{"status":"ok"}`      |
 
 ---
 
 ## Requisitos Previos
 
-- Docker Engine 24+ instalado
-- Puerto **8082** disponible en el host
+- **Docker** instalado (version 20+)
+- Puerto **8082** libre en tu maquina
 
 ```bash
-# Verificar que Docker esta instalado
+# Verificar Docker
 docker --version
 ```
 
 ---
 
-## Despliegue Paso a Paso
+## Paso a Paso para Desplegar
 
-### Paso 1: Ir al directorio del lab
+### 1. Ir al directorio del lab
 
 ```bash
 cd Unidad-1/lab-pacman/
 ```
 
-### Paso 2: Construir la imagen
+### 2. Construir la imagen Docker
 
 ```bash
 docker build -t pacman-lab:v1 .
 ```
 
 Salida esperada:
+
 ```
+[+] Building ...
  => [1/4] FROM docker.io/library/nginx:alpine
  => [2/4] RUN rm -rf /usr/share/nginx/html/*
  => [3/4] COPY nginx.conf /etc/nginx/conf.d/default.conf
  => [4/4] COPY game/ /usr/share/nginx/html/
- => exporting to image
- => => naming to docker.io/library/pacman-lab:v1
+ => => naming to docker.io/library/pacman-lab:v1   DONE
 ```
 
-### Paso 3: Ejecutar el contenedor
+### 3. Ejecutar el contenedor
 
 ```bash
-docker run -d \
-  --name pacman \
-  -p 8082:80 \
-  pacman-lab:v1
+docker run -d --name pacman -p 8082:80 pacman-lab:v1
 ```
 
-### Paso 4: Verificar que esta corriendo
+### 4. Verificar que esta corriendo
 
 ```bash
-# Ver el contenedor activo
-docker ps | grep pacman
+# Ver contenedor activo
+docker ps --filter name=pacman
 
-# Health check
+# Probar el health check
 curl http://localhost:8082/health
 ```
 
-Respuesta esperada del health check:
+Respuesta esperada:
 ```json
 {"status":"ok","game":"pacman"}
 ```
 
-### Paso 5: Jugar
-
-Abrir el navegador en:
+### 5. Abrir en el navegador y jugar
 
 ```
 http://localhost:8082
 ```
 
-Usar las **flechas del teclado** para mover a Pac-Man por el laberinto.
+**Controles del juego:**
+
+| Tecla                     | Accion              |
+|---------------------------|----------------------|
+| Flechas `↑ ↓ ← →`       | Mover a Pac-Man      |
+| `W` `A` `S` `D`          | Mover (alternativo)  |
+| `P`                       | Pausa                |
+| `R`                       | Reiniciar juego      |
+| Deslizar (touch)          | Mover (celulares)    |
 
 ---
 
-## Estructura de Archivos
+## Estructura del Proyecto
 
 ```
 lab-pacman/
-├── Dockerfile          # Imagen basada en nginx:alpine
-├── nginx.conf          # Configuracion del servidor web
-├── game/               # Archivos del juego (HTML5, JS, CSS)
-│   └── index.html
-├── screenshot.png      # Captura de pantalla del juego
-└── README.md           # Este archivo
+├── Dockerfile        # nginx:alpine + copia de archivos
+├── nginx.conf        # Servidor web con cache y health check
+├── game/
+│   └── index.html    # Juego completo (HTML5 Canvas + JS + CSS)
+└── README.md
 ```
 
 ---
@@ -103,22 +124,17 @@ lab-pacman/
 ## Comandos Utiles
 
 ```bash
-# Ver logs del contenedor
+# Ver logs en tiempo real
 docker logs -f pacman
 
-# Acceder al contenedor
+# Entrar al contenedor
 docker exec -it pacman sh
-
-# Dentro del contenedor:
-#   ls /usr/share/nginx/html/    # Ver archivos del juego
-#   nginx -v                      # Version de Nginx
+#   ls /usr/share/nginx/html/
+#   nginx -v
 #   exit
 
-# Reiniciar el contenedor
+# Reiniciar
 docker restart pacman
-
-# Ver detalles de la imagen
-docker inspect pacman-lab:v1
 ```
 
 ---
@@ -126,9 +142,9 @@ docker inspect pacman-lab:v1
 ## Limpieza
 
 ```bash
-# Detener y eliminar el contenedor
+# Detener y eliminar contenedor
 docker stop pacman && docker rm pacman
 
-# Eliminar la imagen
+# Eliminar imagen
 docker rmi pacman-lab:v1
 ```
