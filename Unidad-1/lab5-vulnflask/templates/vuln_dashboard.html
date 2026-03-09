@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<title>Dashboard - VulnFlask</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: 'Courier New', monospace; background: #0a0a0a; color: #00ff41; min-height: 100vh; display: flex; align-items: center; justify-content: center; }
+  .card { background: #111; border: 1px solid #333; border-radius: 8px; padding: 30px; width: 450px; text-align: center; }
+  h2 { margin-bottom: 20px; }
+  .info { background: #1a1a1a; padding: 15px; border-radius: 4px; text-align: left; margin-bottom: 20px; }
+  .label { color: #888; }
+  .links a { color: #00ff41; margin: 0 10px; text-decoration: none; }
+  .links a:hover { text-decoration: underline; }
+  .logout { display: inline-block; margin-top: 15px; color: #ff3333; text-decoration: none; font-size: 0.85rem; }
+</style>
+</head>
+<body>
+<div class="card">
+  <h2>Dashboard</h2>
+  <div class="info">
+    <span class="label">Usuario:</span> {{ user }}<br>
+    <span class="label">Rol:</span> {{ role }}
+  </div>
+  <div class="links">
+    <a href="/">Menu</a>
+    <a href="/search">Buscar</a>
+    <a href="/messages">Mensajes</a>
+    <a href="/sysinfo">Sistema</a>
+  </div>
+  <br>
+  <a class="logout" href="/logout">Cerrar Sesion</a>
+</div>
+</body>
+</html>
