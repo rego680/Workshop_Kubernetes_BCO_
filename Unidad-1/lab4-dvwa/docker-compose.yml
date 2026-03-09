@@ -1,0 +1,67 @@
+###############################################
+# Lab 4: DVWA - Docker Compose
+# Levanta: DVWA (PHP/Apache) + MySQL
+#
+# Uso:
+#   docker compose up -d --build
+#   Acceder: http://localhost:8081
+#   Login: admin / password
+#   Setup: http://localhost:8081/setup.php
+#
+# ⚠️  SOLO PARA LABORATORIO
+###############################################
+
+services:
+  # ── Aplicación DVWA ──────────────────────
+  dvwa-web:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: dvwa-web
+    ports:
+      - "8081:80"
+    environment:
+      - DB_HOST=dvwa-mysql
+      - DB_NAME=dvwa
+      - DB_USER=dvwa
+      - DB_PASS=dvwa_pass123
+    depends_on:
+      dvwa-mysql:
+        condition: service_healthy
+    networks:
+      - dvwa-network
+    restart: unless-stopped
+
+  # ── Base de Datos MySQL ──────────────────
+  dvwa-mysql:
+    image: mysql:8.0
+    container_name: dvwa-mysql
+    environment:
+      MYSQL_ROOT_PASSWORD: root_pass_lab4
+      MYSQL_DATABASE: dvwa
+      MYSQL_USER: dvwa
+      MYSQL_PASSWORD: dvwa_pass123
+    volumes:
+      - dvwa-mysql-data:/var/lib/mysql
+    ports:
+      - "3307:3306"
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "dvwa", "-pdvwa_pass123"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+      start_period: 30s
+    networks:
+      - dvwa-network
+    restart: unless-stopped
+
+# ── Red aislada ──────────────────────────
+networks:
+  dvwa-network:
+    driver: bridge
+    name: dvwa-lab-network
+
+# ── Volumen persistente ──────────────────
+volumes:
+  dvwa-mysql-data:
+    name: dvwa-mysql-data

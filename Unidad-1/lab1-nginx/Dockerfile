@@ -1,0 +1,33 @@
+###############################################
+# Lab 1: Nginx - Servidor Web Personalizado
+# Imagen base: nginx:alpine (ligera ~40MB)
+# Puerto: 80 (mapeado a 8080 en el host)
+###############################################
+
+FROM nginx:alpine
+
+LABEL maintainer="DevOps Lab"
+LABEL description="Lab 1 - Servidor web Nginx con página personalizada"
+LABEL version="1.0"
+
+# Eliminar la página por defecto de Nginx
+RUN rm -rf /usr/share/nginx/html/*
+
+# Copiar configuración personalizada de Nginx
+COPY nginx.conf /etc/nginx/conf.d/default.conf
+
+# Copiar página HTML personalizada
+COPY index.html /usr/share/nginx/html/
+
+# Copiar assets estáticos
+COPY styles.css /usr/share/nginx/html/
+
+# Exponer el puerto 80
+EXPOSE 80
+
+# Health check para monitorear el contenedor
+HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
+  CMD wget -qO- http://localhost/ || exit 1
+
+# Nginx se ejecuta en foreground
+CMD ["nginx", "-g", "daemon off;"]
