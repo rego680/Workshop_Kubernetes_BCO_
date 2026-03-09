@@ -1,0 +1,63 @@
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  background: #000;
+  color: #fff;
+  font-family: Arial, sans-serif;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 20px;
+}
+
+h1 { color: #FFD700; margin-bottom: 10px; font-size: 1.5rem; }
+
+#score { margin-bottom: 10px; font-size: 1.2rem; color: #fff; }
+
+#grid {
+  display: grid;
+  grid-template-columns: repeat(28, 20px);
+  border: 2px solid #1a1aff;
+}
+
+.cell {
+  width: 20px;
+  height: 20px;
+  background: #000;
+}
+
+.wall  { background: #1a1aff; border-radius: 2px; }
+.dot   { background: #000; position: relative; }
+.dot::after {
+  content: '';
+  position: absolute;
+  top: 50%; left: 50%;
+  transform: translate(-50%, -50%);
+  width: 5px; height: 5px;
+  background: #FFD700;
+  border-radius: 50%;
+}
+.power-dot::after { width: 10px; height: 10px; background: #fff; }
+
+.pacman { background: #000; position: relative; }
+.pacman::after {
+  content: '😮';
+  position: absolute;
+  top: 50%; left: 50%;
+  transform: translate(-50%, -50%);
+  font-size: 16px;
+}
+
+.ghost { background: #000; position: relative; }
+.ghost-blinky::after  { content: '👻'; position: absolute; top:50%; left:50%; transform:translate(-50%,-50%); font-size:16px; filter: hue-rotate(0deg); }
+.ghost-pinky::after   { content: '👻'; position: absolute; top:50%; left:50%; transform:translate(-50%,-50%); font-size:16px; filter: hue-rotate(300deg); }
+.ghost-inky::after    { content: '👻'; position: absolute; top:50%; left:50%; transform:translate(-50%,-50%); font-size:16px; filter: hue-rotate(180deg); }
+.ghost-clyde::after   { content: '👻'; position: absolute; top:50%; left:50%; transform:translate(-50%,-50%); font-size:16px; filter: hue-rotate(30deg); }
+.ghost-scared::after  { content: '💙'; position: absolute; top:50%; left:50%; transform:translate(-50%,-50%); font-size:16px; }
+
+#result {
+  margin-top: 20px;
+  font-size: 1.5rem;
+  color: #FFD700;
+  min-height: 2rem;
+}
