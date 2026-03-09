@@ -1,0 +1,7 @@
+# Lab 2: PostgreSQL - Archivos ignorados por Docker
+.git
+.gitignore
+README.md
+*.md
+.env
+.DS_Store
