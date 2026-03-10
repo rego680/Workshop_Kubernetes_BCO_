@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lab 3 — Flask App</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+            color: #e2e8f0;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .container {
+            background: #1e293b;
+            border: 1px solid #334155;
+            border-radius: 12px;
+            padding: 40px;
+            max-width: 600px;
+            width: 90%;
+            text-align: center;
+            box-shadow: 0 4px 24px rgba(0,0,0,0.4);
+        }
+        h1 {
+            color: #38bdf8;
+            font-size: 2em;
+            margin-bottom: 8px;
+        }
+        .subtitle {
+            color: #94a3b8;
+            margin-bottom: 24px;
+        }
+        .info-card {
+            background: #0f172a;
+            border: 1px solid #334155;
+            border-radius: 8px;
+            padding: 20px;
+            margin: 16px 0;
+            text-align: left;
+        }
+        .info-card .label {
+            color: #64748b;
+            font-size: 0.85em;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        .info-card .value {
+            color: #f1f5f9;
+            font-size: 1.1em;
+            margin-top: 4px;
+            font-family: monospace;
+        }
+        .endpoints {
+            text-align: left;
+            margin-top: 24px;
+        }
+        .endpoints h3 {
+            color: #f59e0b;
+            margin-bottom: 12px;
+        }
+        .endpoint {
+            background: #0f172a;
+            border-left: 3px solid #38bdf8;
+            padding: 8px 12px;
+            margin: 8px 0;
+            border-radius: 0 4px 4px 0;
+            font-family: monospace;
+            font-size: 0.9em;
+        }
+        .endpoint .method {
+            color: #4ade80;
+            font-weight: bold;
+        }
+        .badge {
+            display: inline-block;
+            background: #065f46;
+            color: #6ee7b7;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.8em;
+            margin-top: 16px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Flask Lab 3</h1>
+        <p class="subtitle">API REST Basica — Workshop Kubernetes</p>
+
+        <div class="info-card">
+            <div class="label">Hostname</div>
+            <div class="value">{{ hostname }}</div>
+        </div>
+
+        <div class="info-card">
+            <div class="label">Timestamp</div>
+            <div class="value">{{ timestamp }}</div>
+        </div>
+
+        <div class="endpoints">
+            <h3>Endpoints Disponibles</h3>
+            <div class="endpoint">
+                <span class="method">GET</span> / — Pagina principal
+            </div>
+            <div class="endpoint">
+                <span class="method">GET</span> /health — Health check
+            </div>
+            <div class="endpoint">
+                <span class="method">GET</span> /api/info — Info del contenedor (JSON)
+            </div>
+        </div>
+
+        <span class="badge">Running OK</span>
+    </div>
+</body>
+</html>

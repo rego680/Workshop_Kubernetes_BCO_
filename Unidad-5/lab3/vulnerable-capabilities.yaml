@@ -1,5 +1,5 @@
 # ============================================================
-# LAB 1 - VULNERABLE: Abuso de CAP_NET_RAW
+# LAB 3 - VULNERABLE: Abuso de CAP_NET_RAW
 # ============================================================
 # ⚠ PROBLEMA:
 #   - Pod con CAP_NET_RAW y CAP_NET_ADMIN

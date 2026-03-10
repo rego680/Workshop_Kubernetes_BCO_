@@ -1,5 +1,5 @@
 # ============================================================
-# LAB 2 - VULNERABLE: JWT Token Theft & Pivoting
+# LAB 4 - VULNERABLE: JWT Token Theft & Pivoting
 # ============================================================
 # ⚠ PROBLEMA:
 #   - SA con ClusterRole que permite leer secrets en todo NS

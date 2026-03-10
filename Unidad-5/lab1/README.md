@@ -1,4 +1,4 @@
-# 🌐 Lab 2: SSRF & Acceso a Cloud Metadata
+# Lab 1: SSRF & Acceso a Cloud Metadata
 
 ## Objetivo
 
