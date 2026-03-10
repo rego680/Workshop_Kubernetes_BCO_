@@ -16,8 +16,15 @@
 #   kubectl get svc nginx-lab1-svc
 #
 # Verificar acceso:
-#   curl http://localhost:30080       (desde el servidor)
-#   curl http://<IP_SERVIDOR>:30080   (desde otra máquina)
+#   # Opción A — minikube service (abre navegador):
+#   minikube service nginx-lab1-svc
+#
+#   # Opción B — port-forward (funciona con cualquier driver):
+#   kubectl port-forward svc/nginx-lab1-svc 30080:80
+#   curl http://localhost:30080
+#
+#   # Opción C — IP del nodo (solo driver VirtualBox/KVM):
+#   curl http://$(minikube ip):30080
 #
 # Limpiar:
 #   kubectl delete -f lab1-nginx-service.yaml

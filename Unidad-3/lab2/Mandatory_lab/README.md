@@ -52,10 +52,11 @@ Reto practico de **enumeracion en Kubernetes**: encontrar un Pod oculto en un na
 
 ## Requisitos Previos
 
-- Cluster de **Kubernetes** funcionando
+- **Minikube** instalado y corriendo
 - **kubectl** configurado y conectado al cluster
 
 ```bash
+minikube status
 kubectl cluster-info
 kubectl get namespaces
 ```
@@ -110,12 +111,23 @@ kubectl get pods -n kube-public
 kubectl get svc -n kube-public
 ```
 
-### 5. Habilitar acceso con port-forward (Minikube)
+### 5. Habilitar acceso (Minikube)
 
-Si se usa Minikube, el NodePort no es accesible directamente. Usar port-forward:
+En Minikube con driver Docker, el NodePort no es accesible directamente. Elegir una opcion:
 
+**Opcion A — port-forward (recomendada):**
 ```bash
 kubectl port-forward --address 0.0.0.0 -n kube-public svc/paraiso-svc 32767:80 &
+```
+
+**Opcion B — minikube service:**
+```bash
+minikube service paraiso-svc -n kube-public
+```
+
+**Opcion C — IP del nodo (solo driver VirtualBox/KVM):**
+```bash
+curl http://$(minikube ip):32767
 ```
 
 ### 6. Verificar acceso
@@ -159,11 +171,12 @@ Resultado: se descubre `paraiso-svc` en `kube-public` con NodePort `32767`.
 ### Paso 4: Acceder al flag
 
 ```bash
-# Desde el servidor
+# Opcion A — port-forward:
+kubectl port-forward --address 0.0.0.0 -n kube-public svc/paraiso-svc 32767:80 &
 curl http://localhost:32767
 
-# Desde el navegador
-http://<IP_SERVIDOR>:32767
+# Opcion B — minikube service (abre navegador):
+minikube service paraiso-svc -n kube-public
 ```
 
 Se muestra la pagina de completado con:
@@ -189,10 +202,9 @@ El lab incluye scripts para habilitar el dashboard web de Kubernetes:
 ### Opcion B: Port-forward del Dashboard
 
 ```bash
-# Redirigir el dashboard al puerto 65500
+# Habilitar addon y redirigir al puerto 65500
+# Detecta automaticamente el nombre del servicio segun la version de Minikube
 ./port-forward-dashboard-kubernetes.sh
-# Ejecuta: nohup kubectl port-forward -n kubernetes-dashboard \
-#   svc/kubernetes-dashboard 65500:80 --address='0.0.0.0'
 ```
 
 Acceder al dashboard:

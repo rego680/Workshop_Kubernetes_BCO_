@@ -1,0 +1,44 @@
+###############################################
+# LAB 3 — UNIDAD 3: Service para el Deployment
+# Archivo: lab2-app-service.yaml
+#
+# Expone el Deployment httpd-lab2 fuera del
+# cluster usando NodePort.
+#
+# El Service balancea trafico entre TODAS las
+# replicas del Deployment automaticamente.
+#
+# Despliegue:
+#   kubectl apply -f lab2-app-service.yaml
+#   kubectl get svc httpd-lab2-svc
+#
+# Acceso en Minikube:
+#   # Opcion A — port-forward:
+#   kubectl port-forward svc/httpd-lab2-svc 8080:80
+#   curl http://localhost:8080
+#
+#   # Opcion B — minikube service:
+#   minikube service httpd-lab2-svc
+#
+# Limpiar:
+#   kubectl delete -f lab2-app-service.yaml
+###############################################
+
+apiVersion: v1
+kind: Service
+
+metadata:
+  name: httpd-lab2-svc
+  labels:
+    app: httpd-lab2
+    lab: unidad3-lab2
+
+spec:
+  type: NodePort
+  selector:
+    app: httpd-lab2
+  ports:
+  - protocol: TCP
+    port: 80
+    targetPort: 80
+    nodePort: 30081

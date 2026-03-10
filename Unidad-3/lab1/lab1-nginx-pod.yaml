@@ -9,8 +9,7 @@
 #   - Servidor web ligero (~40MB)
 #   - Sirve página HTML por defecto en puerto 80
 #
-# Despliegue en el servidor:
-#   cd ~/k8s-labs
+# Despliegue:
 #   kubectl apply -f lab1-nginx-pod.yaml
 #   kubectl get pods
 #   kubectl describe pod nginx-lab1

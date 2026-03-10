@@ -45,10 +45,11 @@ Crea un **Pod** con Nginx y lo expone al exterior con un **Service NodePort**. E
 
 ## Requisitos Previos
 
-- Cluster de **Kubernetes** funcionando (minikube, kubeadm, etc.)
+- **Minikube** instalado y corriendo
 - **kubectl** configurado y conectado al cluster
 
 ```bash
+minikube status
 kubectl cluster-info
 kubectl get nodes
 ```
@@ -121,19 +122,28 @@ NAME             TYPE       CLUSTER-IP     EXTERNAL-IP   PORT(S)        AGE
 nginx-lab1-svc   NodePort   10.x.x.x      <none>        80:30080/TCP   5s
 ```
 
-### 7. Acceder a Nginx desde el navegador
+### 7. Acceder a Nginx (Minikube)
 
+En Minikube, el NodePort no es accesible directamente via `localhost` con el driver Docker. Usar una de estas opciones:
+
+**Opcion A — `minikube service` (recomendada):**
 ```bash
-# Desde el propio servidor
+# Abre el navegador automaticamente con la URL correcta
+minikube service nginx-lab1-svc
+```
+
+**Opcion B — `port-forward` (funciona con cualquier driver):**
+```bash
+# Redirige el Service al puerto local 30080
+kubectl port-forward svc/nginx-lab1-svc 30080:80
+
+# En otra terminal:
 curl http://localhost:30080
-
-# Desde otra maquina en la red
-curl http://<IP_SERVIDOR>:30080
 ```
 
-Abrir en el navegador:
-```
-http://<IP_SERVIDOR>:30080
+**Opcion C — IP del nodo (solo driver VirtualBox/KVM):**
+```bash
+curl http://$(minikube ip):30080
 ```
 
 Se mostrara la pagina por defecto de Nginx: **"Welcome to nginx!"**

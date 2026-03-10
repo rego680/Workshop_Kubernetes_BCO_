@@ -15,6 +15,15 @@
 #   kubectl apply -f lab2-app-deployment.yaml
 #   kubectl get deploy,pods
 #
+# Verificar acceso (Minikube):
+#   # Opción A — port-forward a uno de los Pods:
+#   kubectl port-forward deployment/httpd-lab2 8080:80
+#   curl http://localhost:8080
+#
+#   # Opción B — exponer con Service temporal:
+#   kubectl expose deployment httpd-lab2 --type=NodePort --port=80
+#   minikube service httpd-lab2
+#
 # Escalar:
 #   kubectl scale deployment httpd-lab2 --replicas=5
 #

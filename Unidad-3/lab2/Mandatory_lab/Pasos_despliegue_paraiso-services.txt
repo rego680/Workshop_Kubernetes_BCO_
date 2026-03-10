@@ -1,5 +1,20 @@
-#PORT 32767
+# Despliegue del reto Paraiso en Minikube
+# Puerto: 32767
 
 kubectl apply -f paraiso-pod.yaml
 kubectl apply -f paraiso-service.yaml
+
+# Verificar despliegue
+kubectl get pods -n kube-public
+kubectl get svc -n kube-public
+
+# Acceso — elegir UNA opcion segun el driver de Minikube:
+
+# Opcion A: port-forward (funciona con cualquier driver)
 kubectl port-forward --address 0.0.0.0 -n kube-public svc/paraiso-svc 32767:80 &
+
+# Opcion B: minikube service (abre navegador automaticamente)
+minikube service paraiso-svc -n kube-public
+
+# Opcion C: IP del nodo (solo driver VirtualBox/KVM)
+# curl http://$(minikube ip):32767

@@ -55,10 +55,11 @@ Introduce el concepto de **Deployment**: un controlador que mantiene un numero d
 
 ## Requisitos Previos
 
-- Cluster de **Kubernetes** funcionando
+- **Minikube** instalado y corriendo
 - **kubectl** configurado y conectado al cluster
 
 ```bash
+minikube status
 kubectl cluster-info
 kubectl get nodes
 ```
@@ -211,6 +212,7 @@ spec:
 ```
 lab3/
 ├── lab2-app-deployment.yaml    # Deployment: httpd:2.4-alpine, 2 replicas
+├── lab2-app-service.yaml       # Service NodePort para exponer el Deployment
 └── README.md
 ```
 
@@ -241,31 +243,58 @@ kubectl exec <NOMBRE_POD> -- cat /usr/local/apache2/htdocs/index.html
 
 ---
 
-## Ejercicio Extra: Exponer el Deployment
+## Exponer el Deployment (Minikube)
 
-El Deployment no tiene un Service asociado. Crear uno para acceder desde el navegador:
+Se incluye un Service NodePort para acceder al Deployment desde el navegador:
+
+### 8. Crear el Service
 
 ```bash
-# Crear un Service NodePort rapidamente
-kubectl expose deployment httpd-lab2 --type=NodePort --port=80
-
-# Ver el puerto asignado
-kubectl get svc httpd-lab2
-
-# Acceder desde el navegador
-curl http://<IP_SERVIDOR>:<NODEPORT>
+kubectl apply -f lab2-app-service.yaml
 ```
+
+### 9. Verificar el Service
+
+```bash
+kubectl get svc httpd-lab2-svc
+```
+
+Salida esperada:
+```
+NAME             TYPE       CLUSTER-IP     EXTERNAL-IP   PORT(S)        AGE
+httpd-lab2-svc   NodePort   10.x.x.x      <none>        80:30081/TCP   5s
+```
+
+### 10. Acceder a la aplicacion (Minikube)
+
+**Opcion A — `minikube service` (recomendada):**
+```bash
+minikube service httpd-lab2-svc
+```
+
+**Opcion B — `port-forward`:**
+```bash
+kubectl port-forward svc/httpd-lab2-svc 8080:80
+curl http://localhost:8080
+```
+
+**Opcion C — IP del nodo (solo driver VirtualBox/KVM):**
+```bash
+curl http://$(minikube ip):30081
+```
+
+Se mostrara la pagina por defecto de Apache: **"It works!"**
+
+> El Service balancea el trafico entre las 2 replicas del Deployment automaticamente.
 
 ---
 
 ## Limpieza
 
 ```bash
-# Eliminar el Deployment (y todos sus Pods)
+# Eliminar el Service y el Deployment (y todos sus Pods)
+kubectl delete -f lab2-app-service.yaml
 kubectl delete -f lab2-app-deployment.yaml
-
-# Si creaste el Service extra
-kubectl delete svc httpd-lab2
 
 # Verificar que todo se elimino
 kubectl get deploy,pods,svc
