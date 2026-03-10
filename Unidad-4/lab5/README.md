@@ -87,67 +87,6 @@ FLUSHALL
 QUIT
 exit
 ```
-
----
-
-## Parte 2: Escenario Seguro (Blue Team)
-
-### Paso 1 — Limpiar el escenario vulnerable
-
-```bash
-kubectl delete -f vulnerable-network.yaml
-```
-
-### Paso 2 — Desplegar con NetworkPolicies + autenticacion
-
-```bash
-kubectl apply -f secure-network.yaml
-
-# Esperar a que los pods esten listos
-kubectl get pods -n lab5-network -w
-kubectl wait --for=condition=Ready pod/redis-secure -n lab5-network --timeout=120s
-kubectl wait --for=condition=Ready pod/webapp-secure -n lab5-network --timeout=120s
-kubectl wait --for=condition=Ready pod/attacker-blocked -n lab5-network --timeout=120s
-```
-
-### Paso 3 — Verificar que la webapp SI puede conectar
-
-```bash
-# Ver logs de la webapp (debe estar escribiendo en Redis exitosamente)
-kubectl logs webapp-secure -n lab5-network
-```
-
-### Paso 4 — Verificar que el atacante NO puede conectar
-
-```bash
-# Entrar al pod atacante
-kubectl exec -it attacker-blocked -n lab5-network -- sh
-
-# Intentar conectar a Redis (bloqueado por NetworkPolicy)
-redis-cli -h redis-secure.lab5-network.svc.cluster.local -p 6379 PING
-# Resultado: timeout / connection refused
-
-# Intentar DNS (tambien bloqueado por deny-all egress)
-nslookup redis-secure.lab5-network.svc.cluster.local
-# Resultado: timeout
-
-exit
-```
-
-### Paso 5 — Verificar las NetworkPolicies aplicadas
-
-```bash
-# Ver las politicas creadas
-kubectl get networkpolicies -n lab5-network
-
-# Ver detalle de cada politica
-kubectl describe networkpolicy default-deny-all -n lab5-network
-kubectl describe networkpolicy allow-webapp-to-redis -n lab5-network
-kubectl describe networkpolicy allow-webapp-egress -n lab5-network
-```
-
----
-
 ## Diferencias Clave
 
 | Aspecto              | Vulnerable                | Seguro                           |
