@@ -22,8 +22,6 @@ API Server de Kubernetes.
 
 ---
 
-## Parte 1: Escenario Vulnerable (Red Team)
-
 ### Paso 1 — Desplegar la configuracion vulnerable
 
 ```bash
