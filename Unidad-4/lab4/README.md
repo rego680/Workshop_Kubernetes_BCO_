@@ -21,9 +21,6 @@ al nodo de Kubernetes.
 - kubectl configurado
 
 ---
-
-## Parte 1: Escenario Vulnerable (Red Team)
-
 ### Paso 1 — Desplegar el pod privilegiado
 
 ```bash
