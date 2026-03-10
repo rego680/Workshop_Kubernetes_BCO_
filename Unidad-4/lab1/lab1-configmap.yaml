@@ -1,0 +1,53 @@
+###############################################
+# LAB 1 — UNIDAD 4: ConfigMap
+# Archivo: lab1-configmap.yaml
+#
+# Un ConfigMap almacena configuracion NO sensible
+# como pares clave:valor. Los Pods pueden consumirlo
+# como variables de entorno o archivos montados.
+#
+# Despliegue:
+#   kubectl apply -f lab1-configmap.yaml
+#   kubectl get configmap app-config
+#   kubectl describe configmap app-config
+#
+# Limpiar:
+#   kubectl delete -f lab1-configmap.yaml
+###############################################
+
+apiVersion: v1
+kind: ConfigMap
+
+metadata:
+  name: app-config
+  labels:
+    app: webapp-lab1
+    lab: unidad4-lab1
+
+# ═══════════════════════════════════════════
+# data — pares clave:valor de configuracion
+#
+# Cada clave se convierte en:
+#   - Una variable de entorno, o
+#   - Un archivo dentro del contenedor
+#
+# Uso tipico: URLs, puertos, feature flags,
+# archivos de configuracion (.conf, .ini, etc.)
+# ═══════════════════════════════════════════
+data:
+  # Variables simples
+  APP_ENV: "production"
+  APP_COLOR: "#2563EB"
+  APP_TITLE: "Workshop K8s - Lab ConfigMap"
+  LOG_LEVEL: "info"
+
+  # Archivo de configuracion completo
+  # Se montara como /etc/app/app.conf dentro del Pod
+  app.conf: |
+    # Configuracion de la aplicacion
+    server.port=80
+    server.host=0.0.0.0
+    app.name=Workshop Kubernetes
+    app.version=1.0
+    features.debug=false
+    features.metrics=true

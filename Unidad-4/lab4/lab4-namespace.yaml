@@ -1,0 +1,20 @@
+###############################################
+# LAB 4 — UNIDAD 4: Namespace para RBAC
+# Archivo: lab4-namespace.yaml
+#
+# Namespace dedicado para practicar RBAC.
+# Aisla los recursos del lab del resto del cluster.
+#
+# Despliegue:
+#   kubectl apply -f lab4-namespace.yaml
+#
+# Limpiar:
+#   kubectl delete -f lab4-namespace.yaml
+###############################################
+
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: lab-rbac
+  labels:
+    lab: unidad4-lab4

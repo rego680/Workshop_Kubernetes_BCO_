@@ -1,0 +1,64 @@
+###############################################
+# LAB 3 — UNIDAD 4: Network Policy — Allow Frontend
+# Archivo: lab3-netpol-allow-frontend.yaml
+#
+# Permite trafico SOLO desde el namespace "frontend"
+# hacia los Pods del namespace "backend".
+# Todo lo demas sigue bloqueado (deny-all activo).
+#
+# Esto implementa el principio de minimo privilegio
+# en la red: solo el frontend puede hablar con el backend.
+#
+# Despliegue (requiere deny-all aplicado primero):
+#   kubectl apply -f lab3-netpol-allow-frontend.yaml
+#   kubectl get networkpolicy -n backend
+#
+# Verificar:
+#   # Desde frontend → backend: PERMITIDO
+#   kubectl exec -n frontend web-frontend -- curl -s --max-time 3 api-backend-svc.backend.svc.cluster.local
+#
+#   # Desde default → backend: BLOQUEADO
+#   kubectl exec test-client -- curl -s --max-time 3 api-backend-svc.backend.svc.cluster.local
+#
+# Limpiar:
+#   kubectl delete -f lab3-netpol-allow-frontend.yaml
+###############################################
+
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+
+metadata:
+  name: allow-frontend-to-backend
+  namespace: backend
+  labels:
+    lab: unidad4-lab3
+
+spec:
+  # Aplica a todos los Pods del namespace backend
+  podSelector: {}
+
+  policyTypes:
+  - Ingress
+
+  # ═══════════════════════════════════════════
+  # ingress — reglas de trafico permitido
+  #
+  # from → origenes permitidos
+  #   namespaceSelector → permite trafico desde
+  #     Pods en namespaces que tengan la label
+  #     "team: frontend"
+  #
+  # ports → solo permitir trafico al puerto 80
+  #
+  # Logica: permitir trafico desde cualquier Pod
+  # en el namespace "frontend" hacia puerto 80
+  # de los Pods del namespace "backend"
+  # ═══════════════════════════════════════════
+  ingress:
+  - from:
+    - namespaceSelector:
+        matchLabels:
+          team: frontend
+    ports:
+    - protocol: TCP
+      port: 80

@@ -1,0 +1,37 @@
+###############################################
+# LAB 1 — UNIDAD 4: Service para el Pod
+# Archivo: lab1-service.yaml
+#
+# Expone el Pod webapp-lab1 fuera del cluster.
+#
+# Despliegue:
+#   kubectl apply -f lab1-service.yaml
+#   kubectl get svc webapp-lab1-svc
+#
+# Acceso (Minikube):
+#   minikube service webapp-lab1-svc
+#   # o bien:
+#   kubectl port-forward svc/webapp-lab1-svc 8080:80
+#
+# Limpiar:
+#   kubectl delete -f lab1-service.yaml
+###############################################
+
+apiVersion: v1
+kind: Service
+
+metadata:
+  name: webapp-lab1-svc
+  labels:
+    app: webapp-lab1
+    lab: unidad4-lab1
+
+spec:
+  type: NodePort
+  selector:
+    app: webapp-lab1
+  ports:
+  - protocol: TCP
+    port: 80
+    targetPort: 80
+    nodePort: 30100

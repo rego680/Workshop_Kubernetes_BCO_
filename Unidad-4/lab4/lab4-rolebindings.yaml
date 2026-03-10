@@ -1,0 +1,72 @@
+###############################################
+# LAB 4 — UNIDAD 4: RoleBindings
+# Archivo: lab4-rolebindings.yaml
+#
+# Conecta los ServiceAccounts con los Roles:
+#   dev-reader  → pod-reader  (solo lectura)
+#   dev-deployer → pod-deployer (lectura + escritura)
+#
+# Sin un RoleBinding, el Role no tiene efecto.
+# El RoleBinding es el "pegamento" entre:
+#   QUIEN (ServiceAccount) → QUE puede hacer (Role)
+#
+# Despliegue:
+#   kubectl apply -f lab4-rolebindings.yaml
+#   kubectl get rolebindings -n lab-rbac
+#
+# Limpiar:
+#   kubectl delete -f lab4-rolebindings.yaml
+###############################################
+
+# ═══════════════════════════════════════════
+# RoleBinding: dev-reader → pod-reader
+#
+# subjects → QUIEN recibe los permisos
+#   kind: ServiceAccount
+#   name: dev-reader
+#
+# roleRef → QUE permisos se otorgan
+#   kind: Role
+#   name: pod-reader
+# ═══════════════════════════════════════════
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+
+metadata:
+  name: reader-binding
+  namespace: lab-rbac
+  labels:
+    lab: unidad4-lab4
+
+subjects:
+- kind: ServiceAccount
+  name: dev-reader
+  namespace: lab-rbac
+
+roleRef:
+  kind: Role
+  name: pod-reader
+  apiGroup: rbac.authorization.k8s.io
+
+---
+# ═══════════════════════════════════════════
+# RoleBinding: dev-deployer → pod-deployer
+# ═══════════════════════════════════════════
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+
+metadata:
+  name: deployer-binding
+  namespace: lab-rbac
+  labels:
+    lab: unidad4-lab4
+
+subjects:
+- kind: ServiceAccount
+  name: dev-deployer
+  namespace: lab-rbac
+
+roleRef:
+  kind: Role
+  name: pod-deployer
+  apiGroup: rbac.authorization.k8s.io

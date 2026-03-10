@@ -1,0 +1,32 @@
+###############################################
+# LAB 3 — UNIDAD 4: Namespaces para Network Policies
+# Archivo: lab3-namespace.yaml
+#
+# Crea dos namespaces para simular dos equipos
+# que deben estar aislados entre si:
+#   - frontend: aplicacion web publica
+#   - backend:  base de datos interna
+#
+# Despliegue:
+#   kubectl apply -f lab3-namespace.yaml
+#   kubectl get namespaces
+#
+# Limpiar:
+#   kubectl delete -f lab3-namespace.yaml
+###############################################
+
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: frontend
+  labels:
+    team: frontend
+    lab: unidad4-lab3
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: backend
+  labels:
+    team: backend
+    lab: unidad4-lab3

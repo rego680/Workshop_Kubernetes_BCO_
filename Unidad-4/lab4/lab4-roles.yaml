@@ -1,0 +1,102 @@
+###############################################
+# LAB 4 — UNIDAD 4: Roles RBAC
+# Archivo: lab4-roles.yaml
+#
+# Define DOS niveles de permisos usando Roles:
+#   - pod-reader:   solo leer Pods y Services
+#   - pod-deployer: leer + crear + eliminar Pods,
+#                   Services y Deployments
+#
+# Un Role define QUE acciones estan permitidas
+# sobre QUE recursos, dentro de UN namespace.
+#
+# Despliegue:
+#   kubectl apply -f lab4-roles.yaml
+#   kubectl get roles -n lab-rbac
+#
+# Limpiar:
+#   kubectl delete -f lab4-roles.yaml
+###############################################
+
+# ═══════════════════════════════════════════
+# Role: pod-reader (solo lectura)
+#
+# apiGroups:
+#   "" (core) → Pod, Service, ConfigMap, Secret
+#   "apps"    → Deployment, ReplicaSet, StatefulSet
+#
+# resources → a que tipo de recursos aplica
+#
+# verbs → acciones permitidas:
+#   get    → ver un recurso especifico
+#   list   → listar todos los recursos
+#   watch  → observar cambios en tiempo real
+#   create → crear nuevos recursos
+#   delete → eliminar recursos
+#   update → modificar recursos existentes
+#   patch  → modificar parcialmente
+# ═══════════════════════════════════════════
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+
+metadata:
+  name: pod-reader
+  namespace: lab-rbac
+  labels:
+    lab: unidad4-lab4
+
+rules:
+# Permitir SOLO lectura de Pods
+- apiGroups: [""]
+  resources: ["pods", "pods/log"]
+  verbs: ["get", "list", "watch"]
+
+# Permitir SOLO lectura de Services
+- apiGroups: [""]
+  resources: ["services"]
+  verbs: ["get", "list", "watch"]
+
+# Permitir SOLO lectura de Deployments
+- apiGroups: ["apps"]
+  resources: ["deployments"]
+  verbs: ["get", "list", "watch"]
+
+---
+# ═══════════════════════════════════════════
+# Role: pod-deployer (lectura + escritura)
+#
+# Tiene todos los permisos de pod-reader MAS
+# la capacidad de crear, actualizar y eliminar
+# recursos. Simula un rol de CI/CD o desarrollador.
+# ═══════════════════════════════════════════
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+
+metadata:
+  name: pod-deployer
+  namespace: lab-rbac
+  labels:
+    lab: unidad4-lab4
+
+rules:
+# Lectura + escritura de Pods
+- apiGroups: [""]
+  resources: ["pods", "pods/log"]
+  verbs: ["get", "list", "watch", "create", "delete"]
+
+# Lectura + escritura de Services
+- apiGroups: [""]
+  resources: ["services"]
+  verbs: ["get", "list", "watch", "create", "delete"]
+
+# Lectura + escritura de Deployments
+- apiGroups: ["apps"]
+  resources: ["deployments"]
+  verbs: ["get", "list", "watch", "create", "update", "delete"]
+
+# Lectura de ConfigMaps (no puede crear ni modificar)
+- apiGroups: [""]
+  resources: ["configmaps"]
+  verbs: ["get", "list"]
+
+# NO tiene acceso a Secrets (principio de minimo privilegio)

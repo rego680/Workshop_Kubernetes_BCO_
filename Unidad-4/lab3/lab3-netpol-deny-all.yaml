@@ -1,0 +1,59 @@
+###############################################
+# LAB 3 — UNIDAD 4: Network Policy — Deny All
+# Archivo: lab3-netpol-deny-all.yaml
+#
+# Politica de "denegacion por defecto" para el
+# namespace backend. BLOQUEA todo el trafico
+# de entrada (ingress) a los Pods del backend.
+#
+# Esto es la base de la microsegmentacion:
+#   1. Denegar TODO por defecto
+#   2. Permitir solo lo necesario (whitelist)
+#
+# Despliegue:
+#   kubectl apply -f lab3-netpol-deny-all.yaml
+#   kubectl get networkpolicy -n backend
+#
+# Verificar que el trafico esta bloqueado:
+#   kubectl exec test-client -- curl -s --max-time 3 api-backend-svc.backend.svc.cluster.local
+#   (debe fallar con timeout)
+#
+# Limpiar:
+#   kubectl delete -f lab3-netpol-deny-all.yaml
+###############################################
+
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+
+metadata:
+  name: deny-all-ingress
+  namespace: backend
+  labels:
+    lab: unidad4-lab3
+
+spec:
+  # ═══════════════════════════════════════════
+  # podSelector — a que Pods aplica esta politica
+  #
+  # {} (vacio) = aplica a TODOS los Pods del namespace
+  # Si quisieras aplicar solo a ciertos Pods:
+  #   podSelector:
+  #     matchLabels:
+  #       app: api-backend
+  # ═══════════════════════════════════════════
+  podSelector: {}
+
+  # ═══════════════════════════════════════════
+  # policyTypes — que tipo de trafico controlar
+  #
+  # Ingress = trafico de ENTRADA al Pod
+  # Egress  = trafico de SALIDA del Pod
+  #
+  # Al definir Ingress sin reglas (ingress: [])
+  # se BLOQUEA todo el trafico de entrada.
+  # ═══════════════════════════════════════════
+  policyTypes:
+  - Ingress
+
+  # Lista de reglas de ingress VACIA = denegar todo
+  ingress: []

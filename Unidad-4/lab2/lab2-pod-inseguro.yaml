@@ -1,0 +1,54 @@
+###############################################
+# LAB 2 — UNIDAD 4: Pod INSEGURO
+# Archivo: lab2-pod-inseguro.yaml
+#
+# Este Pod ejecuta como ROOT y sin restricciones.
+# Demuestra las malas practicas de seguridad:
+#   - Corre como root (UID 0)
+#   - Filesystem de escritura (puede modificar binarios)
+#   - Todas las capabilities de Linux activas
+#   - Puede escalar privilegios
+#
+# Despliegue:
+#   kubectl apply -f lab2-pod-inseguro.yaml
+#   kubectl get pods pod-inseguro
+#
+# Verificar que corre como root:
+#   kubectl exec pod-inseguro -- id
+#   kubectl exec pod-inseguro -- whoami
+#
+# Limpiar:
+#   kubectl delete -f lab2-pod-inseguro.yaml
+###############################################
+
+apiVersion: v1
+kind: Pod
+
+metadata:
+  name: pod-inseguro
+  labels:
+    app: pod-inseguro
+    lab: unidad4-lab2
+    security: none
+
+spec:
+  containers:
+  - name: nginx
+    image: nginx:1.25-alpine
+    ports:
+    - containerPort: 80
+
+    # SIN securityContext = corre como root por defecto
+    # Esto es PELIGROSO porque:
+    #   - root dentro del contenedor = UID 0
+    #   - Si hay un container escape, el atacante es root en el host
+    #   - Puede modificar binarios del sistema (/usr/bin, /etc)
+    #   - Puede instalar herramientas de ataque
+
+    resources:
+      requests:
+        memory: "32Mi"
+        cpu: "50m"
+      limits:
+        memory: "64Mi"
+        cpu: "100m"

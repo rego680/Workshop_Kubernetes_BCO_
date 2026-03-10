@@ -1,0 +1,95 @@
+###############################################
+# LAB 4 — UNIDAD 4: Pods de prueba con ServiceAccounts
+# Archivo: lab4-test-pods.yaml
+#
+# Dos Pods que usan los ServiceAccounts creados:
+#   - pod-reader-test:   usa dev-reader (solo lectura)
+#   - pod-deployer-test: usa dev-deployer (lectura + escritura)
+#
+# Ambos Pods incluyen kubectl para probar permisos
+# directamente desde dentro del contenedor.
+#
+# Despliegue (requiere SA, Roles y RoleBindings):
+#   kubectl apply -f lab4-test-pods.yaml
+#   kubectl get pods -n lab-rbac
+#
+# Limpiar:
+#   kubectl delete -f lab4-test-pods.yaml
+###############################################
+
+# ═══════════════════════════════════════════
+# Pod con ServiceAccount: dev-reader
+# Solo puede leer Pods, Services, Deployments
+# ═══════════════════════════════════════════
+apiVersion: v1
+kind: Pod
+metadata:
+  name: pod-reader-test
+  namespace: lab-rbac
+  labels:
+    app: rbac-test
+    role: reader
+spec:
+  serviceAccountName: dev-reader
+  containers:
+  - name: kubectl
+    image: bitnami/kubectl:latest
+    command: ["sleep", "3600"]
+    resources:
+      requests:
+        memory: "32Mi"
+        cpu: "50m"
+      limits:
+        memory: "64Mi"
+        cpu: "100m"
+---
+# ═══════════════════════════════════════════
+# Pod con ServiceAccount: dev-deployer
+# Puede leer + crear + eliminar recursos
+# ═══════════════════════════════════════════
+apiVersion: v1
+kind: Pod
+metadata:
+  name: pod-deployer-test
+  namespace: lab-rbac
+  labels:
+    app: rbac-test
+    role: deployer
+spec:
+  serviceAccountName: dev-deployer
+  containers:
+  - name: kubectl
+    image: bitnami/kubectl:latest
+    command: ["sleep", "3600"]
+    resources:
+      requests:
+        memory: "32Mi"
+        cpu: "50m"
+      limits:
+        memory: "64Mi"
+        cpu: "100m"
+---
+# ═══════════════════════════════════════════
+# Pod de ejemplo en el namespace lab-rbac
+# Para que los test-pods tengan algo que listar
+# ═══════════════════════════════════════════
+apiVersion: v1
+kind: Pod
+metadata:
+  name: app-ejemplo
+  namespace: lab-rbac
+  labels:
+    app: ejemplo
+spec:
+  containers:
+  - name: nginx
+    image: nginx:1.25-alpine
+    ports:
+    - containerPort: 80
+    resources:
+      requests:
+        memory: "32Mi"
+        cpu: "50m"
+      limits:
+        memory: "64Mi"
+        cpu: "100m"

@@ -1,0 +1,144 @@
+###############################################
+# LAB 2 — UNIDAD 4: Pod SEGURO
+# Archivo: lab2-pod-seguro.yaml
+#
+# Este Pod aplica TODAS las mejores practicas
+# de seguridad usando securityContext:
+#   - Corre como usuario no-root (UID 1000)
+#   - Filesystem de solo lectura
+#   - Capabilities minimas (todas eliminadas)
+#   - No puede escalar privilegios
+#
+# Despliegue:
+#   kubectl apply -f lab2-pod-seguro.yaml
+#   kubectl get pods pod-seguro
+#
+# Verificar que NO corre como root:
+#   kubectl exec pod-seguro -- id
+#   kubectl exec pod-seguro -- whoami
+#
+# Limpiar:
+#   kubectl delete -f lab2-pod-seguro.yaml
+###############################################
+
+apiVersion: v1
+kind: Pod
+
+metadata:
+  name: pod-seguro
+  labels:
+    app: pod-seguro
+    lab: unidad4-lab2
+    security: hardened
+
+spec:
+  # ═══════════════════════════════════════════
+  # securityContext a nivel de Pod:
+  # Aplica a TODOS los contenedores del Pod
+  #
+  #   runAsNonRoot → rechaza el Pod si intenta
+  #                  correr como root (UID 0)
+  #   runAsUser    → fuerza un UID especifico
+  #   runAsGroup   → fuerza un GID especifico
+  #   fsGroup      → GID para volumenes montados
+  # ═══════════════════════════════════════════
+  securityContext:
+    runAsNonRoot: true
+    runAsUser: 1000
+    runAsGroup: 1000
+    fsGroup: 1000
+
+  containers:
+  - name: nginx
+    image: nginx:1.25-alpine
+    ports:
+    - containerPort: 8080
+
+    # ═══════════════════════════════════════
+    # securityContext a nivel de contenedor:
+    # Sobreescribe o complementa el del Pod
+    #
+    # readOnlyRootFilesystem → impide modificar
+    #   binarios del sistema (protege contra
+    #   malware y backdoors)
+    #
+    # allowPrivilegeEscalation → impide que un
+    #   proceso hijo obtenga mas privilegios
+    #   que el padre (bloquea exploits setuid)
+    #
+    # capabilities.drop → elimina capabilities
+    #   de Linux. "ALL" elimina todas:
+    #   NET_RAW, SYS_ADMIN, SYS_PTRACE, etc.
+    # ═══════════════════════════════════════
+    securityContext:
+      readOnlyRootFilesystem: true
+      allowPrivilegeEscalation: false
+      capabilities:
+        drop:
+        - ALL
+
+    # ═══════════════════════════════════════
+    # Nginx necesita escribir en ciertos dirs:
+    #   - /var/cache/nginx (cache)
+    #   - /var/run (PID file)
+    #   - /tmp (archivos temporales)
+    #
+    # Como el filesystem es read-only, montamos
+    # volumenes emptyDir en esas rutas.
+    # emptyDir = directorio temporal en el nodo
+    # que se elimina cuando el Pod muere.
+    # ═══════════════════════════════════════
+    volumeMounts:
+    - name: cache
+      mountPath: /var/cache/nginx
+    - name: run
+      mountPath: /var/run
+    - name: tmp
+      mountPath: /tmp
+
+    # Nginx en modo no-root necesita una config
+    # que escuche en puerto > 1024
+    command: ["/bin/sh", "-c"]
+    args:
+    - |
+      cat > /tmp/nginx.conf << 'CONF'
+      worker_processes 1;
+      pid /var/run/nginx.pid;
+      error_log /tmp/error.log warn;
+      events { worker_connections 128; }
+      http {
+        access_log /tmp/access.log;
+        client_body_temp_path /tmp/client_body;
+        proxy_temp_path /tmp/proxy;
+        fastcgi_temp_path /tmp/fastcgi;
+        uwsgi_temp_path /tmp/uwsgi;
+        scgi_temp_path /tmp/scgi;
+        server {
+          listen 8080;
+          location / {
+            return 200 'Pod Seguro - Security Context Activo\nUsuario: non-root (UID 1000)\nFilesystem: read-only\nCapabilities: none\n';
+            add_header Content-Type text/plain;
+          }
+          location /health {
+            return 200 'OK\n';
+          }
+        }
+      }
+      CONF
+      nginx -c /tmp/nginx.conf -g 'daemon off;'
+
+    resources:
+      requests:
+        memory: "32Mi"
+        cpu: "50m"
+      limits:
+        memory: "64Mi"
+        cpu: "100m"
+
+  volumes:
+  - name: cache
+    emptyDir: {}
+  - name: run
+    emptyDir: {}
+  - name: tmp
+    emptyDir: {}

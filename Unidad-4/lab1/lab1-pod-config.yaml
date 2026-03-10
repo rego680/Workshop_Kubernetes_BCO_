@@ -1,0 +1,134 @@
+###############################################
+# LAB 1 — UNIDAD 4: Pod con ConfigMap y Secret
+# Archivo: lab1-pod-config.yaml
+#
+# Crea un Pod de Nginx que consume:
+#   - ConfigMap → como variables de entorno y volumen
+#   - Secret → como variables de entorno
+#
+# Demuestra las DOS formas de inyectar configuracion:
+#   1. Variables de entorno (env/envFrom)
+#   2. Archivos montados (volumeMounts)
+#
+# Despliegue (requiere ConfigMap y Secret previamente):
+#   kubectl apply -f lab1-configmap.yaml
+#   kubectl apply -f lab1-secret.yaml
+#   kubectl apply -f lab1-pod-config.yaml
+#
+# Verificar variables de entorno:
+#   kubectl exec webapp-lab1 -- env | grep -E "APP_|DB_|API_|LOG_"
+#
+# Verificar archivo de configuracion montado:
+#   kubectl exec webapp-lab1 -- cat /etc/app/app.conf
+#
+# Acceso (Minikube):
+#   kubectl port-forward pod/webapp-lab1 8080:80
+#   curl http://localhost:8080
+#
+# Limpiar:
+#   kubectl delete -f lab1-pod-config.yaml
+###############################################
+
+apiVersion: v1
+kind: Pod
+
+metadata:
+  name: webapp-lab1
+  labels:
+    app: webapp-lab1
+    lab: unidad4-lab1
+
+spec:
+  containers:
+  - name: nginx
+    image: nginx:1.25-alpine
+    ports:
+    - containerPort: 80
+      name: http
+
+    # ═══════════════════════════════════════
+    # FORMA 1: Inyectar como variables de entorno
+    #
+    # env → variables individuales (una por una)
+    # Permite elegir que claves importar y con
+    # que nombre aparecen en el contenedor
+    # ═══════════════════════════════════════
+    env:
+    # Variable desde el ConfigMap
+    - name: APP_ENV
+      valueFrom:
+        configMapKeyRef:
+          name: app-config
+          key: APP_ENV
+
+    - name: APP_TITLE
+      valueFrom:
+        configMapKeyRef:
+          name: app-config
+          key: APP_TITLE
+
+    - name: APP_COLOR
+      valueFrom:
+        configMapKeyRef:
+          name: app-config
+          key: APP_COLOR
+
+    - name: LOG_LEVEL
+      valueFrom:
+        configMapKeyRef:
+          name: app-config
+          key: LOG_LEVEL
+
+    # Variables desde el Secret
+    - name: DB_USER
+      valueFrom:
+        secretKeyRef:
+          name: app-secret
+          key: DB_USER
+
+    - name: DB_PASSWORD
+      valueFrom:
+        secretKeyRef:
+          name: app-secret
+          key: DB_PASSWORD
+
+    - name: API_KEY
+      valueFrom:
+        secretKeyRef:
+          name: app-secret
+          key: API_KEY
+
+    # ═══════════════════════════════════════
+    # FORMA 2: Montar como archivos (volumen)
+    #
+    # El ConfigMap se monta como directorio.
+    # Cada clave del ConfigMap se convierte en
+    # un archivo dentro del directorio montado.
+    # ═══════════════════════════════════════
+    volumeMounts:
+    - name: config-volume
+      mountPath: /etc/app
+      readOnly: true
+
+    resources:
+      requests:
+        memory: "32Mi"
+        cpu: "50m"
+      limits:
+        memory: "64Mi"
+        cpu: "100m"
+
+  # ═══════════════════════════════════════
+  # volumes — define los volumenes disponibles
+  #
+  # configMap.name → referencia al ConfigMap
+  # Cada clave del ConfigMap se convierte
+  # en un archivo dentro de /etc/app/:
+  #   /etc/app/APP_ENV       → contenido: "production"
+  #   /etc/app/APP_COLOR     → contenido: "#2563EB"
+  #   /etc/app/app.conf      → contenido: archivo completo
+  # ═══════════════════════════════════════
+  volumes:
+  - name: config-volume
+    configMap:
+      name: app-config
