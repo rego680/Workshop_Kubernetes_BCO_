@@ -1,0 +1,84 @@
+# ============================================================
+# Lab 2: hostPath Abuse — Escenario VULNERABLE
+# Workshop Ciberseguridad Kubernetes — Unidad 5
+# ============================================================
+# ⚠ PROBLEMA:
+#   - Pod con hostPath: / montado → acceso al filesystem del nodo
+#   - Ejecuta como root → puede leer/escribir cualquier archivo
+#   - Sin PSA enforcement → permite volúmenes hostPath
+#   - automountServiceAccountToken activo
+# ============================================================
+
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: lab3-hostpath
+  labels:
+    lab: "2"
+    scenario: vulnerable
+
+---
+# --- App víctima con secrets (simula un microservicio en producción) ---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: app-secrets
+  namespace: lab3-hostpath
+type: Opaque
+data:
+  DB_PASSWORD: UFByMGQtUzNjcjN0LVBAU3N3MHJkIQ==   # PPr0d-S3cr3t-P@Ssw0rd!
+  API_KEY: c2stbGl2ZS0xMjM0NTY3ODkw               # sk-live-1234567890
+
+---
+# --- Pod víctima (microservicio normal) ---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: victim-app
+  namespace: lab3-hostpath
+  labels:
+    app: victim-app
+spec:
+  containers:
+    - name: app
+      image: nginx:alpine
+      ports:
+        - containerPort: 80
+      env:
+        - name: DB_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: app-secrets
+              key: DB_PASSWORD
+      resources:
+        limits:
+          memory: "128Mi"
+          cpu: "200m"
+
+---
+# ⚠ Pod ATACANTE con hostPath: / montado
+apiVersion: v1
+kind: Pod
+metadata:
+  name: hostpath-pod
+  namespace: lab3-hostpath
+  labels:
+    app: attacker
+spec:
+  containers:
+    - name: attacker
+      image: ubuntu:22.04
+      command: ["sleep", "infinity"]
+      volumeMounts:
+        - name: host-fs
+          mountPath: /host        # ⚠ Filesystem completo del nodo
+      # ⚠ Sin securityContext → ejecuta como root
+      resources:
+        limits:
+          memory: "256Mi"
+          cpu: "500m"
+  volumes:
+    - name: host-fs
+      hostPath:
+        path: /                   # ⚠ Raíz del filesystem del host
+        type: Directory

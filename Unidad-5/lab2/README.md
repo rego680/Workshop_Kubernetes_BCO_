@@ -1,4 +1,4 @@
-# 📂 Lab 3: hostPath Abuse — Escape al Host
+# Lab 2: hostPath Abuse — Escape al Host
 
 ## Objetivo
 

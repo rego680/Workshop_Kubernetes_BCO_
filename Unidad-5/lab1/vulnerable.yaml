@@ -1,5 +1,5 @@
 # ============================================================
-# Lab 2: SSRF & Acceso a Cloud Metadata — Escenario VULNERABLE
+# Lab 1: SSRF & Acceso a Cloud Metadata — Escenario VULNERABLE
 # Workshop Ciberseguridad Kubernetes — Unidad 5
 # ============================================================
 # PROPÓSITO: Demostrar cómo una vulnerabilidad SSRF en una
