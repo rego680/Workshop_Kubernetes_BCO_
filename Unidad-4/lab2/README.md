@@ -70,46 +70,6 @@ kubectl get pods -n lab2-rbac
 exit
 ```
 
----
-
-## Parte 2: Escenario Seguro (Blue Team)
-
-### Paso 1 — Limpiar el escenario vulnerable
-
-```bash
-kubectl delete -f vulnerable-rbac.yaml
-# Nota: eliminar el ClusterRoleBinding es critico
-kubectl delete clusterrolebinding sa-cluster-admin-binding --ignore-not-found
-```
-
-### Paso 2 — Desplegar RBAC con privilegio minimo
-
-```bash
-kubectl apply -f secure-rbac.yaml
-
-kubectl get pods -n lab2-rbac
-kubectl wait --for=condition=Ready pod/secure-pod -n lab2-rbac --timeout=120s
-```
-
-### Paso 3 — Verificar restricciones
-
-```bash
-# El pod seguro NO tiene kubectl, pero podemos verificar los permisos del SA
-kubectl auth can-i --list --as=system:serviceaccount:lab2-rbac:minimal-sa -n lab2-rbac
-
-# Debe mostrar SOLO: get/list en pods y services
-# NO debe tener acceso a secrets, deployments, ni otros namespaces
-
-# Verificar que NO tiene acceso a otros namespaces
-kubectl auth can-i list secrets --as=system:serviceaccount:lab2-rbac:minimal-sa -n kube-system
-# Resultado: no
-
-kubectl auth can-i create pods --as=system:serviceaccount:lab2-rbac:minimal-sa -n lab2-rbac
-# Resultado: no
-```
-
----
-
 ## Diferencias Clave
 
 | Aspecto              | Vulnerable                  | Seguro                     |
