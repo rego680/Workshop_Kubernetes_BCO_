@@ -17,7 +17,7 @@ y heredados por procesos hijo.
 
 ## Requisitos
 
-- minikube corriendo (`minikube start`)
+- Cluster Kubernetes activo
 - kubectl configurado
 
 ---

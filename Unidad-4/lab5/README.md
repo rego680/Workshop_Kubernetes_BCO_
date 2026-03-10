@@ -17,19 +17,13 @@ descubrir servicios internos via DNS y acceder a bases de datos sin restriccion.
 
 ## Requisitos
 
-- minikube con CNI Calico para soporte de NetworkPolicies:
+- Cluster Kubernetes activo con un CNI que soporte NetworkPolicies (ej: Calico, Cilium)
+- kubectl configurado
 
 ```bash
-# IMPORTANTE: NetworkPolicies requieren un CNI que las soporte
-# Iniciar minikube con Calico:
-minikube start --cni=calico --memory=4096
-
-# Verificar que Calico esta corriendo
+# Verificar que el CNI esta corriendo
 kubectl get pods -n kube-system -l k8s-app=calico-node
 # Esperar hasta que esten en estado Running
-
-# Si ya tienes minikube sin Calico, debes recrearlo:
-# minikube delete && minikube start --cni=calico --memory=4096
 ```
 
 ---
