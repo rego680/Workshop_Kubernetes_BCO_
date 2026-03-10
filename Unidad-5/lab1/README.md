@@ -15,7 +15,6 @@ En julio de 2019, una ex-empleada de AWS explotó una vulnerabilidad SSRF en un 
 | Archivo | Descripción |
 |---------|-------------|
 | `vulnerable.yaml` | App Flask con SSRF, sin NetworkPolicy (puede alcanzar IMDS) |
-| `secure.yaml` | App con validación de URLs + NetworkPolicy bloqueando IMDS |
 
 ---
 
@@ -74,32 +73,7 @@ aws ec2 describe-instances
 
 > **Nota**: En un cluster local, `169.254.169.254` no responde. El lab demuestra el flujo de SSRF. En un EKS/GKE/AKS real, sí retorna credenciales.
 
-## Fase 3: Aplicar Remediación
-
-```bash
-kubectl delete -f vulnerable.yaml
-kubectl apply -f secure.yaml
-```
-
-## Fase 4: Verificar que SSRF es Bloqueado
-
-```bash
-# Intentar SSRF al IMDS
-curl "http://<NODE-IP>:31083/fetch?url=http://169.254.169.254/latest/meta-data/"
-# → {"blocked": true, "error": "Acceso a 169.254.169.254 bloqueado (red privada/IMDS)"}
-
-# Intentar IPs internas
-curl "http://<NODE-IP>:31083/fetch?url=http://10.96.0.1/"
-# → {"blocked": true, "error": "Acceso a 10.96.0.1 bloqueado (red privada/IMDS)"}
-
-# URL legítima sí funciona
-curl "http://<NODE-IP>:31083/fetch?url=https://httpbin.org/ip"
-# → {"data": ...}  (funciona)
-```
-
----
-
-## Capas de Defensa
+## Remediación Recomendada
 
 | Capa | Defensa | Cómo Funciona |
 |------|---------|---------------|

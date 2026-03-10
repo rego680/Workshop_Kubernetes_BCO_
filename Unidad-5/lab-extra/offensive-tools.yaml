@@ -1,0 +1,146 @@
+# ============================================================
+# LAB EXTRA - Herramientas Ofensivas Automatizadas
+# ============================================================
+# Despliegue de herramientas de pentesting para Kubernetes
+# dentro del cluster para reconocimiento y auditoría ofensiva.
+#
+# Herramientas incluidas:
+#   - kube-hunter: escaneo de vulnerabilidades del cluster
+#   - peirates: toolkit de pentesting para Kubernetes
+#   - kubectl (desde pod atacante): enumeración del API Server
+#
+# Ejecutar:
+#   kubectl apply -f offensive-tools.yaml
+#   kubectl logs -n lab-extra -l tool=kube-hunter
+#   kubectl exec -it -n lab-extra peirates-pod -- /peirates
+# ============================================================
+
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: lab-extra
+  labels:
+    lab: extra
+    scenario: offensive-tools
+
+---
+# --- ServiceAccount con permisos de lectura para enumerar el cluster ---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: recon-sa
+  namespace: lab-extra
+
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: lab-extra-recon
+rules:
+  - apiGroups: [""]
+    resources: ["pods", "services", "namespaces", "nodes", "configmaps"]
+    verbs: ["get", "list"]
+  - apiGroups: ["apps"]
+    resources: ["deployments", "daemonsets", "replicasets"]
+    verbs: ["get", "list"]
+  - apiGroups: ["rbac.authorization.k8s.io"]
+    resources: ["roles", "rolebindings", "clusterroles", "clusterrolebindings"]
+    verbs: ["get", "list"]
+
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: lab-extra-recon-binding
+subjects:
+  - kind: ServiceAccount
+    name: recon-sa
+    namespace: lab-extra
+roleRef:
+  kind: ClusterRole
+  name: lab-extra-recon
+  apiGroup: rbac.authorization.k8s.io
+
+---
+# ============================================================
+# HERRAMIENTA 1: kube-hunter — Escaneo de vulnerabilidades
+# ============================================================
+# kube-hunter busca debilidades de seguridad en clusters K8s.
+# Se ejecuta como Job y reporta hallazgos en los logs.
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: kube-hunter
+  namespace: lab-extra
+  labels:
+    tool: kube-hunter
+spec:
+  backoffLimit: 1
+  template:
+    metadata:
+      labels:
+        tool: kube-hunter
+    spec:
+      serviceAccountName: recon-sa
+      containers:
+        - name: kube-hunter
+          image: aquasec/kube-hunter:latest
+          command: ["kube-hunter"]
+          args:
+            - "--pod"           # Escanea desde dentro del cluster
+            - "--log", "INFO"
+            - "--report", "plain"
+          resources:
+            limits:
+              memory: "256Mi"
+              cpu: "500m"
+      restartPolicy: Never
+
+---
+# ============================================================
+# HERRAMIENTA 2: peirates — Toolkit de pentesting K8s
+# ============================================================
+# Peirates es un toolkit interactivo para pentesting de
+# Kubernetes. Permite explotar SA tokens, enumerar secrets,
+# crear pods privilegiados, y más.
+apiVersion: v1
+kind: Pod
+metadata:
+  name: peirates-pod
+  namespace: lab-extra
+  labels:
+    tool: peirates
+spec:
+  serviceAccountName: recon-sa
+  containers:
+    - name: peirates
+      image: joshuaanalytics/peirates:latest
+      command: ["sleep", "infinity"]
+      resources:
+        limits:
+          memory: "256Mi"
+          cpu: "500m"
+
+---
+# ============================================================
+# HERRAMIENTA 3: Pod de reconocimiento manual
+# ============================================================
+# Pod con herramientas de red y kubectl para enumeración
+# manual del cluster.
+apiVersion: v1
+kind: Pod
+metadata:
+  name: recon-pod
+  namespace: lab-extra
+  labels:
+    tool: recon
+spec:
+  serviceAccountName: recon-sa
+  containers:
+    - name: recon
+      image: nicolaka/netshoot
+      command: ["sleep", "infinity"]
+      resources:
+        limits:
+          memory: "256Mi"
+          cpu: "500m"
