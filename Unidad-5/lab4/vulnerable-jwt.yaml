@@ -1,0 +1,129 @@
+# ============================================================
+# LAB 2 - VULNERABLE: JWT Token Theft & Pivoting
+# ============================================================
+# ⚠ PROBLEMA:
+#   - SA con ClusterRole que permite leer secrets en todo NS
+#   - automountServiceAccountToken: true (default)
+#   - Token JWT legacy sin expiración
+#   - Secrets almacenados como env vars (visibles en /proc)
+# ============================================================
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: lab2-jwt
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: lab2-prod
+---
+# ⚠ Secrets en el namespace "prod" (el objetivo del atacante)
+apiVersion: v1
+kind: Secret
+metadata:
+  name: database-credentials
+  namespace: lab2-prod
+type: Opaque
+data:
+  DB_HOST: cHJvZC1kYi5pbnRlcm5hbC5jb20=             # prod-db.internal.com
+  DB_USER: YWRtaW4=                                     # admin
+  DB_PASSWORD: UFByMGQtUzNjcjN0LURCLVBAc3N3MHJkIQ==   # PProD-S3cr3t-DB-P@ssw0rd!
+  DB_NAME: cHJvZHVjdGlvbl9kYg==                        # production_db
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: api-keys
+  namespace: lab2-prod
+type: Opaque
+data:
+  STRIPE_KEY: c2stbGl2ZS01MUNoYXJnZUFQSUtleTEyMzQ1Njc4OTA= # sk-live-51ChargeAPIKey1234567890
+  AWS_ACCESS_KEY: QUtJQVhYWFhYWFhYWFhYWFhYWA==               # AKIAXXXXXXXXXXXXXXXXXXXX
+  AWS_SECRET_KEY: d0phbHJYVXRuRkVNSS9LN01ERU5HL2JQeFJmaUNZRVhBTVBMRUtFWQ== # wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY
+---
+# ⚠ ServiceAccount con ClusterRole permisivo
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: overprivileged-sa
+  namespace: lab2-jwt
+  # ⚠ automountServiceAccountToken es true por defecto
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: secret-reader-all
+rules:
+  - apiGroups: [""]
+    resources: ["secrets"]
+    verbs: ["get", "list"]               # ⚠ Puede leer secrets en TODOS los NS
+  - apiGroups: [""]
+    resources: ["pods", "services", "namespaces"]
+    verbs: ["get", "list"]               # ⚠ Puede enumerar todo el cluster
+  - apiGroups: ["apps"]
+    resources: ["deployments", "daemonsets"]
+    verbs: ["get", "list"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: sa-secret-reader-binding
+subjects:
+  - kind: ServiceAccount
+    name: overprivileged-sa
+    namespace: lab2-jwt
+roleRef:
+  kind: ClusterRole
+  name: secret-reader-all
+  apiGroup: rbac.authorization.k8s.io
+---
+# ⚠ Pod comprometido: usa el SA permisivo
+apiVersion: v1
+kind: Pod
+metadata:
+  name: compromised-app
+  namespace: lab2-jwt
+  labels:
+    app: web-app
+spec:
+  serviceAccountName: overprivileged-sa   # ⚠ SA con ClusterRole
+  # ⚠ automountServiceAccountToken: true (default)
+  containers:
+    - name: app
+      image: nicolaka/netshoot
+      command: ["sleep", "infinity"]
+      # ⚠ Sin securityContext hardening
+      env:
+        - name: APP_SECRET
+          value: "internal-app-secret-key-12345"  # ⚠ Secret en env var
+      resources:
+        limits:
+          memory: "256Mi"
+          cpu: "500m"
+---
+# ⚠ Pod en "prod" con secrets como env vars
+apiVersion: v1
+kind: Pod
+metadata:
+  name: prod-api
+  namespace: lab2-prod
+  labels:
+    app: prod-api
+spec:
+  containers:
+    - name: api
+      image: python:3.11-slim
+      command: ["sleep", "infinity"]
+      envFrom:
+        - secretRef:
+            name: database-credentials    # ⚠ Todos los secrets como env vars
+      env:
+        - name: STRIPE_KEY
+          valueFrom:
+            secretKeyRef:
+              name: api-keys
+              key: STRIPE_KEY             # ⚠ API key en env var
+      resources:
+        limits:
+          memory: "128Mi"
+          cpu: "250m"

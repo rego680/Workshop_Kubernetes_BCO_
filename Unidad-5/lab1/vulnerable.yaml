@@ -1,0 +1,138 @@
+# ============================================================
+# Lab 2: SSRF & Acceso a Cloud Metadata — Escenario VULNERABLE
+# Workshop Ciberseguridad Kubernetes — Unidad 5
+# ============================================================
+# PROPÓSITO: Demostrar cómo una vulnerabilidad SSRF en una
+# app permite acceder al IMDS (169.254.169.254) y robar
+# credenciales IAM del nodo cloud
+# ============================================================
+
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: lab2-ssrf
+  labels:
+    lab: "2"
+    scenario: vulnerable
+
+---
+# --- ConfigMap con la app vulnerable a SSRF ---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: ssrf-app-code
+  namespace: lab2-ssrf
+data:
+  app.py: |
+    from flask import Flask, request, jsonify
+    import urllib.request
+    import urllib.error
+
+    app = Flask(__name__)
+
+    @app.route('/')
+    def index():
+        return '''
+        <html>
+        <head><title>URL Fetcher</title>
+        <style>
+          body { font-family: Arial; background: #0D1117; color: #F0F6FC; padding: 40px; }
+          input { width: 500px; padding: 10px; font-size: 16px; }
+          button { padding: 10px 20px; background: #238636; color: white; border: none; cursor: pointer; }
+          pre { background: #161B22; padding: 20px; border-radius: 8px; overflow-x: auto; }
+        </style>
+        </head>
+        <body>
+          <h1>🌐 URL Fetcher Service</h1>
+          <p>Ingresa una URL para obtener su contenido:</p>
+          <form action="/fetch" method="GET">
+            <input type="text" name="url" placeholder="https://example.com" />
+            <button type="submit">Fetch</button>
+          </form>
+        </body></html>
+        '''
+
+    @app.route('/fetch')
+    def fetch_url():
+        url = request.args.get('url', '')
+        if not url:
+            return jsonify({"error": "Parametro 'url' requerido"}), 400
+
+        try:
+            # ⚠ VULNERABLE: No valida la URL del usuario
+            # Un atacante puede redirigir a 169.254.169.254
+            req = urllib.request.Request(url)
+            with urllib.request.urlopen(req, timeout=5) as response:
+                data = response.read().decode('utf-8', errors='replace')
+                return f'''
+                <html><head><title>Resultado</title>
+                <style>
+                  body {{ font-family: Arial; background: #0D1117; color: #F0F6FC; padding: 40px; }}
+                  pre {{ background: #161B22; padding: 20px; border-radius: 8px; overflow-x: auto; color: #10B981; }}
+                  a {{ color: #3B82F6; }}
+                </style></head><body>
+                <h2>Resultado de: {url}</h2>
+                <pre>{data}</pre>
+                <br><a href="/">← Volver</a>
+                </body></html>
+                '''
+        except Exception as e:
+            return jsonify({"error": str(e)}), 500
+
+    if __name__ == '__main__':
+        app.run(host='0.0.0.0', port=8080)
+
+---
+# --- Deployment vulnerable ---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ssrf-app
+  namespace: lab2-ssrf
+  labels:
+    app: ssrf-app
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: ssrf-app
+  template:
+    metadata:
+      labels:
+        app: ssrf-app
+    spec:
+      containers:
+        - name: webapp
+          image: python:3.11-slim
+          command: ["bash", "-c"]
+          args:
+            - |
+              pip install flask --quiet &&
+              python /app/app.py
+          ports:
+            - containerPort: 8080
+          volumeMounts:
+            - name: app-code
+              mountPath: /app
+          # ⚠ Sin NetworkPolicy egress
+          # ⚠ Puede alcanzar 169.254.169.254
+      volumes:
+        - name: app-code
+          configMap:
+            name: ssrf-app-code
+
+---
+# --- Service para exponer la app ---
+apiVersion: v1
+kind: Service
+metadata:
+  name: ssrf-app-svc
+  namespace: lab2-ssrf
+spec:
+  type: NodePort
+  selector:
+    app: ssrf-app
+  ports:
+    - port: 8080
+      targetPort: 8080
+      nodePort: 31082
