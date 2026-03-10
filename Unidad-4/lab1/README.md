@@ -75,42 +75,6 @@ exit
 
 ---
 
-## Parte 2: Escenario Seguro (Blue Team)
-
-### Paso 1 — Limpiar el escenario vulnerable
-
-```bash
-kubectl delete -f role-binding-vulnerable.yaml
-kubectl delete -f vulnerable-pod.yaml
-```
-
-### Paso 2 — Desplegar la configuracion segura
-
-```bash
-kubectl apply -f secure-pod.yaml
-
-# Verificar que el pod esta corriendo
-kubectl get pods -n lab1-token
-```
-
-### Paso 3 — Verificar que el token NO esta montado
-
-```bash
-kubectl exec -it app-secure -n lab1-token -- sh
-
-# Dentro del pod: intentar leer el token
-ls /var/run/secrets/
-# Resultado: directorio NO existe
-
-# Intentar acceder al API Server
-curl -sk https://kubernetes.default.svc/api/v1/namespaces
-# Resultado: 403 Forbidden (sin credenciales)
-
-exit
-```
-
----
-
 ## Diferencias Clave
 
 | Aspecto                        | Vulnerable              | Seguro                            |
