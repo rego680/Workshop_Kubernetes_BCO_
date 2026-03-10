@@ -5,7 +5,7 @@
 #   default, permitiendo que un atacante acceda al API Server
 #   si logra RCE (Remote Code Execution) en el contenedor.
 #
-# Ejecutar en minikube:
+# Ejecutar:
 #   kubectl apply -f vulnerable-pod.yaml
 #   kubectl apply -f role-binding-vulnerable.yaml
 #   kubectl exec -it app-vulnerable -n lab1-token -- bash

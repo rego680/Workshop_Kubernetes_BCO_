@@ -6,10 +6,7 @@
 #   un Pod puede descubrir servicios internos vía DNS y acceder
 #   a bases de datos sin autenticación.
 #
-# Prerequisito en minikube:
-#   minikube start --cni=calico
-#   # O si ya tienes minikube corriendo:
-#   minikube addons enable network-policy (solo con --cni=calico)
+# Prerequisito: CNI con soporte de NetworkPolicies (Calico, Cilium)
 #
 # Ejecutar:
 #   kubectl apply -f vulnerable-network.yaml

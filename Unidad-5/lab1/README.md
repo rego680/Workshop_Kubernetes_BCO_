@@ -32,10 +32,11 @@ kubectl get pods -n lab2-ssrf -w
 ### Paso 1: Acceder a la app
 
 ```bash
-# Si usas minikube:
-minikube service ssrf-app-svc -n lab2-ssrf --url
+# Obtener la IP del nodo
+kubectl get nodes -o wide
+# Usar la IP INTERNAL del nodo
 
-# O directamente:
+# Acceder a la app via NodePort
 # http://<NODE-IP>:31082
 ```
 
@@ -71,7 +72,7 @@ aws ec2 describe-instances
 # → CONTROL sobre recursos cloud del nodo
 ```
 
-> **Nota**: En minikube/local, `169.254.169.254` no responde. El lab demuestra el flujo de SSRF. En un EKS/GKE/AKS real, sí retorna credenciales.
+> **Nota**: En un cluster local, `169.254.169.254` no responde. El lab demuestra el flujo de SSRF. En un EKS/GKE/AKS real, sí retorna credenciales.
 
 ## Fase 3: Aplicar Remediación
 
