@@ -72,46 +72,6 @@ kubectl get secret db-credentials -n lab3-secrets -o jsonpath='{.data.DB_PASSWOR
 # Resultado: Sup3rSecretP@ssw0rd!2024
 ```
 
----
-
-## Parte 2: Escenario Seguro (Blue Team)
-
-### Paso 1 — Limpiar el escenario vulnerable
-
-```bash
-kubectl delete -f vulnerable-secrets.yaml
-```
-
-### Paso 2 — Desplegar la configuracion segura
-
-```bash
-kubectl apply -f secure-secrets.yaml
-
-kubectl get pods -n lab3-secrets
-kubectl wait --for=condition=Ready pod/app-secure-secrets -n lab3-secrets --timeout=120s
-```
-
-### Paso 3 — Verificar que los secrets NO estan en env vars
-
-```bash
-kubectl exec -it app-secure-secrets -n lab3-secrets -- sh
-
-# Intentar leer desde env
-env | grep DB_
-# Resultado: VACIO (no hay variables DB_*)
-
-# Los secrets estan montados como archivos read-only
-ls -la /etc/secrets/db/
-cat /etc/secrets/db/DB_PASSWORD
-
-# Verificar permisos restrictivos (0400 = solo lectura por owner)
-stat /etc/secrets/db/DB_PASSWORD
-
-exit
-```
-
----
-
 ## Diferencias Clave
 
 | Aspecto                  | Vulnerable              | Seguro                     |
