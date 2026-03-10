@@ -1,0 +1,74 @@
+# ============================================================
+# LAB 4 - SEGURO: Pod Hardened (Sin Escape Posible)
+# ============================================================
+# ✅ SOLUCIÓN:
+#   1. Sin hostPID, hostNetwork ni privileged
+#   2. Drop ALL capabilities + seccomp
+#   3. Non-root + readOnlyRootFilesystem
+#   4. Recursos limitados
+#   5. Pod Security Admission enforced
+#
+# Ejecutar en minikube:
+#   kubectl apply -f secure-privileged.yaml
+#   kubectl exec -it hardened-pod -n lab4-escape -- bash
+#   # Dentro del pod:
+#   ps aux           → Solo ve sus propios procesos
+#   mount            → No puede montar filesystems del host
+#   whoami           → nobody (no root)
+# ============================================================
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: lab4-escape
+  labels:
+    # ✅ Pod Security Admission: rechaza pods privilegiados
+    pod-security.kubernetes.io/enforce: restricted
+    pod-security.kubernetes.io/warn: restricted
+    pod-security.kubernetes.io/audit: restricted
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: hardened-pod
+  namespace: lab4-escape
+spec:
+  # ✅ Sin acceso a procesos ni red del host
+  hostPID: false
+  hostNetwork: false
+  automountServiceAccountToken: false
+  containers:
+    - name: app
+      image: nginxinc/nginx-unprivileged:1.25
+      ports:
+        - containerPort: 8080
+      securityContext:
+        privileged: false                  # ✅ No privilegiado
+        runAsNonRoot: true                 # ✅ No root
+        runAsUser: 101                     # ✅ Usuario nginx
+        readOnlyRootFilesystem: true       # ✅ FS solo lectura
+        allowPrivilegeEscalation: false    # ✅ Sin escalación
+        capabilities:
+          drop: ["ALL"]                    # ✅ Sin capabilities
+        seccompProfile:
+          type: RuntimeDefault             # ✅ Perfil seccomp
+      resources:
+        limits:
+          memory: "128Mi"
+          cpu: "250m"
+        requests:
+          memory: "64Mi"
+          cpu: "100m"
+      volumeMounts:
+        - name: tmp
+          mountPath: /tmp
+        - name: cache
+          mountPath: /var/cache/nginx
+        - name: run
+          mountPath: /var/run
+  volumes:
+    - name: tmp
+      emptyDir: {}
+    - name: cache
+      emptyDir: {}
+    - name: run
+      emptyDir: {}
