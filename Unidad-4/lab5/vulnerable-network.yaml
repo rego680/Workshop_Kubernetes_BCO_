@@ -1,0 +1,91 @@
+# ============================================================
+# LAB 5 - VULNERABLE: Sin NetworkPolicies (Movimiento Lateral)
+# ============================================================
+# ⚠ PROBLEMA: Sin NetworkPolicies, cualquier Pod puede comunicarse
+#   con cualquier otro Pod en el clúster. Un atacante que compromete
+#   un Pod puede descubrir servicios internos vía DNS y acceder
+#   a bases de datos sin autenticación.
+#
+# Prerequisito en minikube:
+#   minikube start --cni=calico
+#   # O si ya tienes minikube corriendo:
+#   minikube addons enable network-policy (solo con --cni=calico)
+#
+# Ejecutar:
+#   kubectl apply -f vulnerable-network.yaml
+#   kubectl exec -it attacker -n lab5-network -- sh
+#   # Dentro del pod atacante:
+#   nslookup redis-vulnerable.lab5-network.svc.cluster.local
+#   redis-cli -h redis-vulnerable.lab5-network.svc.cluster.local
+#   > KEYS *
+#   > SET hacked "true"
+# ============================================================
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: lab5-network
+---
+# ⚠ Redis SIN password — accesible desde cualquier Pod
+apiVersion: v1
+kind: Pod
+metadata:
+  name: redis-vulnerable
+  namespace: lab5-network
+  labels:
+    app: redis
+    role: database
+spec:
+  containers:
+    - name: redis
+      image: redis:7-alpine
+      ports:
+        - containerPort: 6379
+      # ⚠ Sin requirepass → cualquiera puede conectarse
+      # ⚠ Sin NetworkPolicy → accesible desde todo el clúster
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: redis-vulnerable
+  namespace: lab5-network
+spec:
+  selector:
+    app: redis
+  ports:
+    - port: 6379
+      targetPort: 6379
+---
+# App legítima que usa Redis
+apiVersion: v1
+kind: Pod
+metadata:
+  name: webapp
+  namespace: lab5-network
+  labels:
+    app: webapp
+    role: frontend
+spec:
+  containers:
+    - name: app
+      image: redis:7-alpine
+      command: ["sh", "-c", "while true; do redis-cli -h redis-vulnerable SET app-status online EX 30; sleep 10; done"]
+---
+# ⚠ Pod atacante — puede acceder a Redis sin restricciones
+apiVersion: v1
+kind: Pod
+metadata:
+  name: attacker
+  namespace: lab5-network
+  labels:
+    app: attacker
+    role: recon
+spec:
+  containers:
+    - name: tools
+      image: redis:7-alpine
+      command: ["sleep", "infinity"]
+      # ⚠ Desde aquí se puede:
+      #   1. Descubrir servicios con nslookup
+      #   2. Conectar a Redis sin autenticación
+      #   3. Leer/escribir datos arbitrarios
+      #   4. Usar Redis como C2 channel

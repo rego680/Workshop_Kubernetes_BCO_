@@ -4,7 +4,21 @@
 # ⚠ PROBLEMA: El Pod monta automáticamente el token del SA
 #   default, permitiendo que un atacante acceda al API Server
 #   si logra RCE (Remote Code Execution) en el contenedor.
+#
+# Ejecutar en minikube:
+#   kubectl apply -f vulnerable-pod.yaml
+#   kubectl apply -f role-binding-vulnerable.yaml
+#   kubectl exec -it app-vulnerable -n lab1-token -- bash
+#   # Dentro del pod:
+#   cat /var/run/secrets/kubernetes.io/serviceaccount/token
+#   curl -sk https://$KUBERNETES_SERVICE_HOST/api/v1/namespaces/lab1-token/secrets \
+#     -H "Authorization: Bearer $(cat /var/run/secrets/kubernetes.io/serviceaccount/token)"
 # ============================================================
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: lab1-token
+---
 apiVersion: v1
 kind: Pod
 metadata:
@@ -23,8 +37,3 @@ spec:
       # ⚠ No hay securityContext → corre como root
       # ⚠ No hay readOnlyRootFilesystem
       # ⚠ No hay recursos limitados
----
-apiVersion: v1
-kind: Namespace
-metadata:
-  name: lab1-token
