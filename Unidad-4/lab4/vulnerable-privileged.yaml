@@ -1,0 +1,27 @@
+# ============================================================
+# LAB 4 - VULNERABLE: Pod Privilegiado (Container Escape)
+# ============================================================
+# ⚠ PROBLEMA: Pod con hostPID, hostNetwork y privileged: true
+#   permite escape del contenedor al host subyacente.
+# ============================================================
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: lab4-escape
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: privileged-pod
+  namespace: lab4-escape
+spec:
+  hostPID: true              # ⚠ Acceso a procesos del host
+  hostNetwork: true          # ⚠ Acceso a la red del host
+  containers:
+    - name: pwned
+      image: ubuntu:22.04
+      command: ["sleep", "infinity"]
+      securityContext:
+        privileged: true     # ⚠ ACCESO TOTAL al host
+      # ⚠ Sin límites de recursos
+      # ⚠ Corre como root

@@ -1,0 +1,121 @@
+# ============================================================
+#  lab1-rolebinding-vulnerable.yaml
+# ============================================================
+#  ⚠️  SOLO PARA LABORATORIO — Simula un cluster mal configurado
+#
+#  ¿Por qué no usamos el ClusterRole "view"?
+#    En K8s 1.22+ el ClusterRole "view" EXCLUYE secrets por seguridad.
+#    Para demostrar la vulnerabilidad real, creamos un Role custom
+#    que incluye acceso a secrets explícitamente.
+#
+#  Aplicar:  kubectl apply -f lab1-rolebinding-vulnerable.yaml
+#  Revertir: kubectl delete -f lab1-rolebinding-vulnerable.yaml
+# ============================================================
+
+# ─────────────────────────────────────────────────────────────
+# 1. Role custom con lectura TOTAL (incluye secrets)
+# ─────────────────────────────────────────────────────────────
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: lab1-read-all
+  namespace: lab1-token
+  labels:
+    lab: lab1-token
+    purpose: security-lab
+    status: vulnerable
+rules:
+  # Recursos core (pods, secrets, configmaps, etc.)
+  - apiGroups: [""]
+    resources:
+      - pods
+      - pods/log
+      - services
+      - endpoints
+      - configmaps
+      - secrets                         # <-- PELIGROSO: acceso a secrets
+      - serviceaccounts
+      - namespaces
+    verbs: ["get", "list", "watch"]
+  # Recursos de apps (deployments, replicasets, etc.)
+  - apiGroups: ["apps"]
+    resources:
+      - deployments
+      - replicasets
+      - statefulsets
+      - daemonsets
+    verbs: ["get", "list", "watch"]
+  # Jobs y CronJobs
+  - apiGroups: ["batch"]
+    resources:
+      - jobs
+      - cronjobs
+    verbs: ["get", "list", "watch"]
+  # Networking
+  - apiGroups: ["networking.k8s.io"]
+    resources:
+      - networkpolicies
+      - ingresses
+    verbs: ["get", "list", "watch"]
+
+---
+# ─────────────────────────────────────────────────────────────
+# 2. RoleBinding — conecta el Role al SA "default"
+# ─────────────────────────────────────────────────────────────
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: lab1-vulnerable-read
+  namespace: lab1-token
+  labels:
+    lab: lab1-token
+    purpose: security-lab
+    status: vulnerable
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: lab1-read-all                   # <-- Apunta al Role custom (no a ClusterRole/view)
+subjects:
+  - kind: ServiceAccount
+    name: default                       # <-- SA "default" del namespace
+    namespace: lab1-token
+
+---
+# ─────────────────────────────────────────────────────────────
+# NIVEL 2 (OPCIONAL): Mismos permisos pero en TODOS los namespaces
+# ─────────────────────────────────────────────────────────────
+# Descomentar para demostrar escalación cross-namespace.
+# Requiere un ClusterRole (no Role) + ClusterRoleBinding.
+# ─────────────────────────────────────────────────────────────
+# apiVersion: rbac.authorization.k8s.io/v1
+# kind: ClusterRole
+# metadata:
+#   name: lab1-cluster-read-all
+#   labels:
+#     lab: lab1-token
+#     purpose: security-lab
+#     status: vulnerable
+# rules:
+#   - apiGroups: [""]
+#     resources: ["pods", "secrets", "configmaps", "services", "namespaces"]
+#     verbs: ["get", "list", "watch"]
+#   - apiGroups: ["apps"]
+#     resources: ["deployments", "replicasets", "statefulsets"]
+#     verbs: ["get", "list", "watch"]
+# ---
+# apiVersion: rbac.authorization.k8s.io/v1
+# kind: ClusterRoleBinding
+# metadata:
+#   name: lab1-vulnerable-cluster-read
+#   labels:
+#     lab: lab1-token
+#     purpose: security-lab
+#     status: vulnerable
+# roleRef:
+#   apiGroup: rbac.authorization.k8s.io
+#   kind: ClusterRole
+#   name: lab1-cluster-read-all
+# subjects:
+#   - kind: ServiceAccount
+#     name: default
+#     namespace: lab1-token

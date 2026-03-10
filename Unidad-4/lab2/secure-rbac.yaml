@@ -1,0 +1,73 @@
+# ============================================================
+# LAB 2 - SEGURO: RBAC con Privilegio Mínimo
+# ============================================================
+# ✅ SOLUCIÓN:
+#   1. Role (no ClusterRole) limitado al namespace
+#   2. Verbos mínimos: get, list solo en recursos necesarios
+#   3. RoleBinding en vez de ClusterRoleBinding
+# ============================================================
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: lab2-rbac
+  labels:
+    pod-security.kubernetes.io/enforce: restricted
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: minimal-sa
+  namespace: lab2-rbac
+automountServiceAccountToken: false
+---
+# ✅ Role limitado: solo leer pods y services en su namespace
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: pod-reader
+  namespace: lab2-rbac
+rules:
+  - apiGroups: [""]
+    resources: ["pods", "services"]
+    verbs: ["get", "list"]          # ✅ Solo lectura
+  # ✅ NO incluye: secrets, nodes, namespaces
+  # ✅ NO incluye: create, delete, patch, update
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: minimal-sa-binding
+  namespace: lab2-rbac               # ✅ Solo en este namespace
+subjects:
+  - kind: ServiceAccount
+    name: minimal-sa
+    namespace: lab2-rbac
+roleRef:
+  kind: Role                         # ✅ Role, no ClusterRole
+  name: pod-reader
+  apiGroup: rbac.authorization.k8s.io
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: secure-pod
+  namespace: lab2-rbac
+spec:
+  serviceAccountName: minimal-sa
+  automountServiceAccountToken: false
+  containers:
+    - name: app
+      image: nginx:1.25
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1000
+        readOnlyRootFilesystem: true
+        allowPrivilegeEscalation: false
+        capabilities:
+          drop: ["ALL"]
+        seccompProfile:
+          type: RuntimeDefault
+      resources:
+        limits:
+          memory: "128Mi"
+          cpu: "250m"

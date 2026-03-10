@@ -1,0 +1,30 @@
+# ============================================================
+# LAB 1 - VULNERABLE: Token de ServiceAccount Expuesto
+# ============================================================
+# ⚠ PROBLEMA: El Pod monta automáticamente el token del SA
+#   default, permitiendo que un atacante acceda al API Server
+#   si logra RCE (Remote Code Execution) en el contenedor.
+# ============================================================
+apiVersion: v1
+kind: Pod
+metadata:
+  name: app-vulnerable
+  namespace: lab1-token
+  labels:
+    app: vulnerable-app
+spec:
+  # ⚠ No se especifica automountServiceAccountToken: false
+  # ⚠ No se especifica un SA restringido — usa "default"
+  containers:
+    - name: webapp
+      image: nginx:1.25
+      ports:
+        - containerPort: 80
+      # ⚠ No hay securityContext → corre como root
+      # ⚠ No hay readOnlyRootFilesystem
+      # ⚠ No hay recursos limitados
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: lab1-token
