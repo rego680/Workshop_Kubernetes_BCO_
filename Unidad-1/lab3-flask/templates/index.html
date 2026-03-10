@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Lab 3 - Flask en Docker</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: 'Segoe UI', sans-serif;
+    background: linear-gradient(135deg, #0f0c29, #302b63, #24243e);
+    color: #fff;
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .card {
+    background: rgba(255,255,255,0.08);
+    border: 1px solid rgba(255,255,255,0.15);
+    border-radius: 16px;
+    padding: 40px;
+    max-width: 500px;
+    text-align: center;
+    backdrop-filter: blur(10px);
+  }
+  .icon { font-size: 3rem; margin-bottom: 12px; }
+  h1 { font-size: 1.8rem; margin-bottom: 8px; }
+  .subtitle { color: #aaa; font-size: 0.9rem; margin-bottom: 24px; }
+  .info {
+    background: rgba(0,0,0,0.3);
+    border-radius: 8px;
+    padding: 16px;
+    text-align: left;
+    font-family: monospace;
+    font-size: 0.85rem;
+    line-height: 1.8;
+  }
+  .label { color: #888; }
+  .value { color: #4fc3f7; }
+  .footer { margin-top: 20px; color: #666; font-size: 0.75rem; }
+</style>
+</head>
+<body>
+  <div class="card">
+    <div class="icon">&#x1f40d;</div>
+    <h1>Lab 3 - Flask</h1>
+    <div class="subtitle">Aplicacion web en contenedor Docker</div>
+    <div class="info">
+      <span class="label">Hostname:</span> <span class="value">{{ hostname }}</span><br>
+      <span class="label">Framework:</span> <span class="value">Flask 3.0.0</span><br>
+      <span class="label">Runtime:</span> <span class="value">Python 3.11-slim</span><br>
+      <span class="label">Puerto:</span> <span class="value">5000</span>
+    </div>
+    <div class="footer">Unidad 1 - Fundamentos de Contenedores</div>
+  </div>
+</body>
+</html>

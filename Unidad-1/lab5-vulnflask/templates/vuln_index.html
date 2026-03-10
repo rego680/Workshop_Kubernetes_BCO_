@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>VulnFlask - Lab 5</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: 'Courier New', monospace;
+    background: #0a0a0a;
+    color: #00ff41;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+  }
+  .container { max-width: 700px; text-align: center; padding: 40px; }
+  h1 { font-size: 2.5rem; margin-bottom: 5px; color: #ff3333; }
+  .warning {
+    background: rgba(255,0,0,0.1);
+    border: 1px solid #ff3333;
+    border-radius: 8px;
+    padding: 12px;
+    margin: 15px 0;
+    color: #ff6666;
+    font-size: 0.8rem;
+  }
+  .subtitle { color: #888; margin-bottom: 30px; }
+  .nav { display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; }
+  .nav a {
+    display: block;
+    background: rgba(0,255,65,0.05);
+    border: 1px solid #00ff41;
+    color: #00ff41;
+    padding: 14px 20px;
+    text-decoration: none;
+    border-radius: 8px;
+    width: 200px;
+    transition: all 0.2s;
+  }
+  .nav a:hover { background: #00ff41; color: #000; }
+  .nav .vuln-name { font-weight: bold; font-size: 0.95rem; }
+  .nav .vuln-type { font-size: 0.7rem; color: #888; margin-top: 4px; }
+  .nav a:hover .vuln-type { color: #333; }
+  .footer { margin-top: 30px; color: #444; font-size: 0.7rem; }
+</style>
+</head>
+<body>
+<div class="container">
+  <h1>VulnFlask</h1>
+  <div class="subtitle">Lab 5 - Aplicacion Vulnerable para Pentesting</div>
+  <div class="warning">SOLO PARA USO EDUCATIVO EN ENTORNOS AISLADOS - CONTIENE VULNERABILIDADES INTENCIONALES</div>
+  <div class="nav">
+    <a href="/login">
+      <div class="vuln-name">Login</div>
+      <div class="vuln-type">SQL Injection</div>
+    </a>
+    <a href="/search">
+      <div class="vuln-name">Busqueda</div>
+      <div class="vuln-type">SQL Injection + XSS</div>
+    </a>
+    <a href="/messages">
+      <div class="vuln-name">Mensajes</div>
+      <div class="vuln-type">XSS Stored</div>
+    </a>
+    <a href="/ping">
+      <div class="vuln-name">Ping</div>
+      <div class="vuln-type">Command Injection</div>
+    </a>
+    <a href="/readfile?file=">
+      <div class="vuln-name">Leer Archivo</div>
+      <div class="vuln-type">Path Traversal (LFI)</div>
+    </a>
+    <a href="/sysinfo">
+      <div class="vuln-name">Info Sistema</div>
+      <div class="vuln-type">Information Disclosure</div>
+    </a>
+  </div>
+  <div class="footer">Unidad 1 - Fundamentos de Contenedores</div>
+</div>
+</body>
+</html>

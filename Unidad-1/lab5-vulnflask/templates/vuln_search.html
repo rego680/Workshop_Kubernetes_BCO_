@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<title>Busqueda - VulnFlask</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: 'Courier New', monospace; background: #0a0a0a; color: #00ff41; min-height: 100vh; padding: 40px; }
+  .container { max-width: 700px; margin: 0 auto; }
+  h2 { margin-bottom: 5px; }
+  .hint { color: #666; font-size: 0.7rem; margin-bottom: 20px; }
+  form { display: flex; gap: 10px; margin-bottom: 20px; }
+  input[type="text"] { flex: 1; padding: 10px; background: #1a1a1a; border: 1px solid #333; color: #00ff41; border-radius: 4px; font-family: inherit; }
+  button { padding: 10px 20px; background: #00ff41; color: #000; border: none; border-radius: 4px; font-weight: bold; cursor: pointer; }
+  .error { background: rgba(255,0,0,0.1); border: 1px solid #ff3333; color: #ff6666; padding: 10px; border-radius: 4px; margin-bottom: 14px; font-size: 0.8rem; word-break: break-all; }
+  .result-info { color: #888; font-size: 0.8rem; margin-bottom: 10px; }
+  table { width: 100%; border-collapse: collapse; }
+  th, td { padding: 8px 12px; text-align: left; border-bottom: 1px solid #222; }
+  th { color: #888; }
+  .back { color: #555; text-decoration: none; font-size: 0.8rem; }
+  .back:hover { color: #00ff41; }
+</style>
+</head>
+<body>
+<div class="container">
+  <h2>Busqueda de Usuarios</h2>
+  <div class="hint">Vuln: SQL Injection &mdash; Payload: ' UNION SELECT 1,username,password,email,role,secret_note FROM users--</div>
+  <form method="GET">
+    <input type="text" name="q" value="{{ query }}" placeholder="Buscar usuario..." autofocus>
+    <button type="submit">Buscar</button>
+  </form>
+  {% if error %}
+  <div class="error">{{ error }}</div>
+  {% endif %}
+  {% if query %}
+  <div class="result-info">Resultados para: "{{ query | e }}" ({{ results | length }} encontrados)</div>
+  {% endif %}
+  {% if results %}
+  <table>
+    <tr><th>ID</th><th>Username</th><th>Email</th><th>Role</th></tr>
+    {% for r in results %}
+    <tr><td>{{ r[0] }}</td><td>{{ r[1] }}</td><td>{{ r[2] }}</td><td>{{ r[3] }}</td></tr>
+    {% endfor %}
+  </table>
+  {% endif %}
+  <br><a class="back" href="/">Volver al menu</a>
+</div>
+</body>
+</html>

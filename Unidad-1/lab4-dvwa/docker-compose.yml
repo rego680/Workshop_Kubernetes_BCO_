@@ -36,6 +36,7 @@ services:
   dvwa-mysql:
     image: mysql:8.0
     container_name: dvwa-mysql
+    command: --default-authentication-plugin=mysql_native_password
     environment:
       MYSQL_ROOT_PASSWORD: root_pass_lab4
       MYSQL_DATABASE: dvwa
@@ -46,11 +47,11 @@ services:
     ports:
       - "3307:3306"
     healthcheck:
-      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "dvwa", "-pdvwa_pass123"]
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-uroot", "-proot_pass_lab4"]
       interval: 5s
-      timeout: 3s
-      retries: 10
-      start_period: 30s
+      timeout: 5s
+      retries: 15
+      start_period: 45s
     networks:
       - dvwa-network
     restart: unless-stopped
