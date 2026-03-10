@@ -1,0 +1,72 @@
+###############################################
+# LAB 1 — UNIDAD 3: Nginx Service (NodePort)
+# Archivo: lab1-nginx-service.yaml
+#
+# Expone el Pod de Nginx fuera del cluster.
+# Tipo NodePort: accesible desde cualquier máquina
+# en la red usando http://<IP_SERVIDOR>:30080
+#
+# ¿Cómo encuentra el Service al Pod?
+#   El selector "app: nginx-lab1" busca todos
+#   los Pods que tengan esa label y les envía
+#   tráfico automáticamente.
+#
+# Despliegue:
+#   kubectl apply -f lab1-nginx-service.yaml
+#   kubectl get svc nginx-lab1-svc
+#
+# Verificar acceso:
+#   curl http://localhost:30080       (desde el servidor)
+#   curl http://<IP_SERVIDOR>:30080   (desde otra máquina)
+#
+# Limpiar:
+#   kubectl delete -f lab1-nginx-service.yaml
+###############################################
+
+apiVersion: v1
+kind: Service
+
+metadata:
+  name: nginx-lab1-svc
+  labels:
+    app: nginx-lab1
+    lab: unidad3-lab1
+
+spec:
+  # ═══════════════════════════════════════════
+  # type — cómo se expone el Service:
+  #
+  #   ClusterIP    → solo accesible DENTRO del cluster
+  #                  (comunicación entre microservicios)
+  #   NodePort     → abre un puerto en cada nodo del cluster
+  #                  (rango: 30000–32767)
+  #                  Acceso: http://<IP_NODO>:<NodePort>
+  #   LoadBalancer → crea balanceador en la nube
+  #                  (solo en AWS, GCP, Azure, etc.)
+  # ═══════════════════════════════════════════
+  type: NodePort
+
+  # ═══════════════════════════════════════════
+  # selector — busca Pods con esta label
+  # Todos los Pods con "app: nginx-lab1"
+  # recibirán tráfico de este Service.
+  # Si creas más Pods con la misma label,
+  # el Service balancea entre todos.
+  # ═══════════════════════════════════════════
+  selector:
+    app: nginx-lab1
+
+  # ═══════════════════════════════════════════
+  # ports — mapeo de puertos:
+  #   port       → puerto del Service dentro del cluster
+  #   targetPort → puerto del contenedor (donde escucha la app)
+  #   nodePort   → puerto externo en el nodo (30000-32767)
+  #
+  # Flujo del tráfico:
+  #   Cliente → <IP_SERVIDOR>:30080 → Service:80 → Pod:80
+  # ═══════════════════════════════════════════
+  ports:
+  - protocol: TCP
+    port: 80
+    targetPort: 80
+    nodePort: 30080

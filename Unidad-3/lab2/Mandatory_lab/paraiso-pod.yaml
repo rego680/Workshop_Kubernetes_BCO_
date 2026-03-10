@@ -1,0 +1,181 @@
+###############################################
+# Sirve una página HTML personalizada con
+# el flag del reto. Usa un ConfigMap para
+# inyectar el HTML dentro del contenedor Nginx.
+#
+# Despliegue:
+#   kubectl apply -f paraiso-pod.yaml
+#   kubectl get pods -n kube-public
+#
+# Limpiar:
+#   kubectl delete -f paraiso-pod.yaml
+###############################################
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: paraiso-html
+  namespace: kube-public
+data:
+  index.html: |
+    <!DOCTYPE html>
+    <html lang="es">
+    <head>
+      <meta charset="UTF-8">
+      <meta name="viewport" content="width=device-width, initial-scale=1.0">
+      <title>Paraíso - Reto K8s</title>
+      <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+          min-height: 100vh;
+          background: #0F1729;
+          color: #E2E8F0;
+          font-family: 'Courier New', monospace;
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          justify-content: center;
+          padding: 2rem;
+        }
+        .container {
+          max-width: 700px;
+          width: 100%;
+          background: #1A2332;
+          border: 1px solid #2A3A4E;
+          border-radius: 12px;
+          padding: 2.5rem;
+        }
+        h1 {
+          color: #22C55E;
+          font-size: 2rem;
+          margin-bottom: 0.5rem;
+        }
+        .subtitle {
+          color: #64748B;
+          font-size: 0.9rem;
+          margin-bottom: 2rem;
+        }
+        .section {
+          background: #111827;
+          border-radius: 8px;
+          padding: 1.2rem;
+          margin-bottom: 1.2rem;
+        }
+        .section h2 {
+          color: #3B82F6;
+          font-size: 1rem;
+          margin-bottom: 0.8rem;
+        }
+        .check {
+          color: #4ADE80;
+          margin-bottom: 0.4rem;
+          font-size: 0.9rem;
+        }
+        .check::before {
+          content: "✔ ";
+          color: #22C55E;
+        }
+        .info {
+          color: #67E8F9;
+          font-size: 0.85rem;
+          margin-bottom: 0.3rem;
+        }
+        .info span {
+          color: #FDE68A;
+        }
+        .flag-box {
+          background: linear-gradient(135deg, #1C1917, #292524);
+          border: 2px solid #EF4444;
+          border-radius: 8px;
+          padding: 1.5rem;
+          text-align: center;
+          margin-top: 1.5rem;
+        }
+        .flag-label {
+          color: #F59E0B;
+          font-size: 0.85rem;
+          text-transform: uppercase;
+          letter-spacing: 3px;
+          margin-bottom: 0.5rem;
+        }
+        .flag {
+          color: #EF4444;
+          font-size: 1.6rem;
+          font-weight: bold;
+          letter-spacing: 2px;
+        }
+        .footer {
+          text-align: center;
+          color: #475569;
+          font-size: 0.75rem;
+          margin-top: 1.5rem;
+        }
+      </style>
+    </head>
+    <body>
+      <div class="container">
+        <h1>&#127796; Paraíso Encontrado</h1>
+        <p class="subtitle">Has completado el reto de enumeración de Kubernetes</p>
+
+        <div class="section">
+          <h2>&#128270; Lo que demostraste</h2>
+          <p class="check">Enumerar pods en todos los namespaces</p>
+          <p class="check">Identificar recursos fuera del namespace default</p>
+          <p class="check">Encontrar el Service y su puerto NodePort</p>
+          <p class="check">Conectarte al pod desde el navegador</p>
+        </div>
+
+        <div class="section">
+          <h2>&#128202; Datos del Pod</h2>
+          <p class="info">Nombre: <span>paraiso</span></p>
+          <p class="info">Namespace: <span>kube-public</span></p>
+          <p class="info">Imagen: <span>nginx:1.25-alpine</span></p>
+          <p class="info">Service: <span>paraiso-svc (NodePort)</span></p>
+          <p class="info">Puerto expuesto: <span>32767</span></p>
+        </div>
+
+        <div class="section">
+          <h2>&#128218; Conceptos aplicados</h2>
+          <p class="info">&#8594; <span>kubectl get pods -A</span> lista todos los namespaces</p>
+          <p class="info">&#8594; <span>kubectl get svc -A</span> muestra todos los Services</p>
+          <p class="info">&#8594; <span>kubectl describe</span> revela detalles del recurso</p>
+          <p class="info">&#8594; <span>NodePort</span> expone un Service fuera del clúster</p>
+        </div>
+
+        <div class="flag-box">
+          <p class="flag-label">&#127937; Reto completado</p>
+          <p class="flag">Flag{S3rvice_Identificado}</p>
+        </div>
+
+        <p class="footer">Workshop Kubernetes - Seguridad y Administración de Clústers</p>
+      </div>
+    </body>
+    </html>
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: paraiso
+  namespace: kube-public
+  labels:
+    app: paraiso
+spec:
+  containers:
+  - name: nginx
+    image: nginx:1.25-alpine
+    ports:
+    - containerPort: 80
+      name: http
+    resources:
+      requests:
+        memory: "32Mi"
+        cpu: "50m"
+      limits:
+        memory: "64Mi"
+        cpu: "100m"
+    volumeMounts:
+    - name: html-content
+      mountPath: /usr/share/nginx/html
+  volumes:
+  - name: html-content
+    configMap:
+      name: paraiso-html

@@ -1,0 +1,5 @@
+#PORT 32767
+
+kubectl apply -f paraiso-pod.yaml
+kubectl apply -f paraiso-service.yaml
+kubectl port-forward --address 0.0.0.0 -n kube-public svc/paraiso-svc 32767:80 &

@@ -1,0 +1,77 @@
+###############################################
+# LAB 1 — UNIDAD 3: Nginx Pod
+# Archivo: lab1-nginx-pod.yaml
+#
+# Mi primer manifiesto Kubernetes.
+# Crea un Pod simple con Nginx desde DockerHub.
+#
+# Imagen DockerHub: nginx:1.25-alpine
+#   - Servidor web ligero (~40MB)
+#   - Sirve página HTML por defecto en puerto 80
+#
+# Despliegue en el servidor:
+#   cd ~/k8s-labs
+#   kubectl apply -f lab1-nginx-pod.yaml
+#   kubectl get pods
+#   kubectl describe pod nginx-lab1
+#   kubectl logs nginx-lab1
+#
+# Limpiar:
+#   kubectl delete -f lab1-nginx-pod.yaml
+###############################################
+
+# ═══════════════════════════════════════════
+# apiVersion: versión de la API de Kubernetes
+#   v1       → API core (Pod, Service, ConfigMap, Secret)
+#   apps/v1  → Deployment, ReplicaSet, StatefulSet
+# ═══════════════════════════════════════════
+apiVersion: v1
+
+# ═══════════════════════════════════════════
+# kind: tipo de recurso a crear
+#   Pod = unidad mínima de ejecución en K8s
+#   Un Pod envuelve uno o más contenedores
+# ═══════════════════════════════════════════
+kind: Pod
+
+# ═══════════════════════════════════════════
+# metadata: datos de identificación del recurso
+#   name   → nombre único dentro del namespace
+#   labels → etiquetas clave:valor para agrupar
+#            y seleccionar recursos (los Services
+#            usan labels para encontrar Pods)
+# ═══════════════════════════════════════════
+metadata:
+  name: nginx-lab1
+  labels:
+    app: nginx-lab1
+    lab: unidad3-lab1
+    tier: frontend
+
+# ═══════════════════════════════════════════
+# spec: estado deseado del Pod
+#   containers → lista de contenedores a ejecutar
+#     name     → identificador del contenedor
+#     image    → imagen Docker a descargar (DockerHub)
+#     ports    → puertos expuestos por el contenedor
+#     resources → límites de CPU y RAM
+# ═══════════════════════════════════════════
+spec:
+  containers:
+  - name: nginx
+    image: nginx:1.25-alpine
+    ports:
+    - containerPort: 80
+      name: http
+
+    # Límites de recursos:
+    # requests = mínimo garantizado (scheduler lo usa
+    #            para decidir en qué nodo colocar el Pod)
+    # limits   = máximo permitido (si lo excede, se mata)
+    resources:
+      requests:
+        memory: "32Mi"       # 32 MiB de RAM mínimo
+        cpu: "50m"           # 50 milicores = 5% de 1 CPU
+      limits:
+        memory: "64Mi"       # 64 MiB de RAM máximo
+        cpu: "100m"          # 100 milicores = 10% de 1 CPU

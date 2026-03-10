@@ -1,0 +1,1 @@
+nohup kubectl port-forward -n kubernetes-dashboard svc/kubernetes-dashboard 65500:80 --address='0.0.0.0' > /var/log/k8s-dashboard.log 2>&1 &

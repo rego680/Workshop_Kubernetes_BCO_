@@ -1,0 +1,84 @@
+###############################################
+# LAB 2 — UNIDAD 3: Deployment con Réplicas
+# Archivo: lab2-app-deployment.yaml
+#
+# Diferencia clave vs Lab 1:
+#   Lab 1 → Pod suelto (si muere, NO se recrea)
+#   Lab 2 → Deployment (si un Pod muere, K8s
+#           crea otro automáticamente = self-healing)
+#
+# Imagen DockerHub: httpd:2.4-alpine
+#   - Apache HTTP Server (~55MB)
+#   - Sirve "It works!" en puerto 80
+#
+# Despliegue:
+#   kubectl apply -f lab2-app-deployment.yaml
+#   kubectl get deploy,pods
+#
+# Escalar:
+#   kubectl scale deployment httpd-lab2 --replicas=5
+#
+# Limpiar:
+#   kubectl delete -f lab2-app-deployment.yaml
+###############################################
+
+# ═══════════════════════════════════════════
+# apiVersion: apps/v1
+# Los Deployments pertenecen al grupo "apps"
+# (distinto de v1 que es para Pods y Services)
+# ═══════════════════════════════════════════
+apiVersion: apps/v1
+kind: Deployment
+
+metadata:
+  name: httpd-lab2
+  labels:
+    app: httpd-lab2
+    lab: unidad3-lab2
+
+# ═══════════════════════════════════════════
+# spec del Deployment:
+#   replicas → cuántos Pods mantener corriendo
+#   selector → cómo identificar SUS Pods
+#   template → plantilla para crear cada Pod
+#
+# K8s SIEMPRE mantiene el número de réplicas:
+#   - Si un Pod muere → crea otro nuevo
+#   - Si hay Pods de más → los elimina
+# ═══════════════════════════════════════════
+spec:
+  replicas: 2
+
+  # selector: conecta el Deployment con sus Pods
+  # IMPORTANTE: matchLabels DEBE coincidir
+  # exactamente con template.metadata.labels
+  selector:
+    matchLabels:
+      app: httpd-lab2
+
+  # ═══════════════════════════════════════════
+  # template: plantilla para crear Pods
+  # Es la misma estructura que un Pod pero
+  # sin apiVersion ni kind (están implícitos)
+  #
+  # Cada réplica se crea usando esta plantilla
+  # ═══════════════════════════════════════════
+  template:
+    metadata:
+      labels:
+        app: httpd-lab2
+        lab: unidad3-lab2
+    spec:
+      containers:
+      - name: httpd
+        image: httpd:2.4-alpine
+        ports:
+        - containerPort: 80
+          name: http
+        resources:
+          requests:
+            memory: "32Mi"
+            cpu: "50m"
+          limits:
+            memory: "64Mi"
+            cpu: "100m"
