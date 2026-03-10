@@ -79,62 +79,6 @@ ls /etc/kubernetes/pki/ 2>/dev/null
 exit
 exit
 ```
-
----
-
-## Parte 2: Escenario Seguro (Blue Team)
-
-### Paso 1 — Limpiar el escenario vulnerable
-
-```bash
-kubectl delete -f vulnerable-privileged.yaml
-```
-
-### Paso 2 — Desplegar el pod hardened
-
-```bash
-kubectl apply -f secure-privileged.yaml
-
-kubectl get pods -n lab4-escape
-kubectl wait --for=condition=Ready pod/hardened-pod -n lab4-escape --timeout=120s
-```
-
-### Paso 3 — Verificar que el escape NO es posible
-
-```bash
-kubectl exec -it hardened-pod -n lab4-escape -- sh
-
-# Intentar ver procesos del host
-ps aux
-# Resultado: solo ve sus propios procesos (PID namespace aislado)
-
-# Intentar montar filesystem
-mount /dev/sda1 /mnt 2>&1
-# Resultado: Permission denied
-
-# Verificar usuario
-whoami
-id
-# Resultado: uid=101 (no root)
-
-# Intentar escalar privilegios
-su -
-# Resultado: Permission denied
-
-exit
-```
-
-### Paso 4 — Verificar Pod Security Admission
-
-```bash
-# Intentar crear un pod privilegiado en el namespace protegido
-kubectl run test-escape --image=ubuntu:22.04 -n lab4-escape \
-  --overrides='{"spec":{"hostPID":true,"containers":[{"name":"test","image":"ubuntu:22.04","securityContext":{"privileged":true}}]}}'
-# Resultado: Error - violates PodSecurity "restricted"
-```
-
----
-
 ## Diferencias Clave
 
 | Aspecto                    | Vulnerable        | Seguro                 |
