@@ -99,27 +99,6 @@ exit
 
 ---
 
-## Nota sobre minikube
-
-Las NetworkPolicies **solo funcionan** si minikube fue iniciado con un CNI compatible:
-
-```bash
-# Correcto (soporta NetworkPolicies):
-minikube start --cni=calico
-
-# Incorrecto (NO soporta NetworkPolicies):
-minikube start              # usa bridge por defecto
-minikube start --cni=kindnet
-```
-
-Si las NetworkPolicies no bloquean el trafico, verifica que Calico este corriendo:
-
-```bash
-kubectl get pods -n kube-system -l k8s-app=calico-node
-```
-
----
-
 ## Limpieza
 
 ```bash
