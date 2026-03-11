@@ -1,0 +1,41 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: pod-no-privilegiado
+  labels:
+    app: pod-no-privilegiado
+spec:
+  securityContext:
+    runAsNonRoot: true       # El contenedor NO puede ejecutarse como root
+    runAsUser: 1000          # UID del usuario no root
+    runAsGroup: 3000         # GID del grupo
+    fsGroup: 2000            # Grupo para volúmenes montados
+
+  containers:
+    - name: app
+      image: nginx:alpine
+      ports:
+        - containerPort: 8080
+      securityContext:
+        allowPrivilegeEscalation: false   # Impide escalar privilegios
+        privileged: false                 # No modo privilegiado
+        readOnlyRootFilesystem: true      # Filesystem raíz en solo lectura
+        capabilities:
+          drop:
+            - ALL                         # Elimina TODAS las Linux capabilities
+      resources:
+        requests:
+          memory: "64Mi"
+          cpu: "250m"
+        limits:
+          memory: "128Mi"
+          cpu: "500m"
+      volumeMounts:
+        - name: tmp
+          mountPath: /tmp                 # Volumen temporal escribible si se necesita
+
+  volumes:
+    - name: tmp
+      emptyDir: {}
+
+  automountServiceAccountToken: false     # No montar token de SA automáticamente
