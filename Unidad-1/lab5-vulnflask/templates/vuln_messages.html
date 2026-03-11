@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Mensajes - VulnFlask</title>
+    <style>
+        body { font-family: Arial, sans-serif; background: #1a1a2e; color: #eee; margin: 0; padding: 20px; }
+        .container { max-width: 700px; margin: 30px auto; }
+        h2 { color: #e94560; }
+        form { background: #16213e; padding: 20px; border-radius: 10px; margin-bottom: 20px; }
+        label { display: block; margin-top: 10px; font-weight: bold; }
+        input[type="text"], textarea { width: 100%; padding: 10px; margin-top: 5px; border: 1px solid #0f3460; border-radius: 5px; background: #0f3460; color: #eee; box-sizing: border-box; }
+        textarea { height: 80px; resize: vertical; }
+        button { padding: 10px 20px; margin-top: 15px; background: #e94560; color: white; border: none; border-radius: 5px; cursor: pointer; }
+        .message { background: #16213e; padding: 15px; border-radius: 8px; margin-bottom: 10px; border-left: 4px solid #0f3460; }
+        .message .author { color: #e94560; font-weight: bold; }
+        .message .date { color: #666; font-size: 0.85em; }
+        .message .content { margin-top: 8px; }
+        .hint { background: #0f3460; padding: 10px; border-radius: 5px; margin-top: 15px; font-size: 0.85em; color: #aaa; }
+        a { color: #e94560; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h2>Tablon de Mensajes</h2>
+
+        <form method="POST">
+            <label>Autor</label>
+            <input type="text" name="author" placeholder="Tu nombre" value="Anonimo">
+            <label>Mensaje</label>
+            <textarea name="content" placeholder="Escribe tu mensaje..." required></textarea>
+            <button type="submit">Publicar</button>
+        </form>
+
+        <h3>Mensajes recientes</h3>
+        {% for msg in messages %}
+        <div class="message">
+            <span class="author">{{ msg['author'] }}</span>
+            <span class="date"> - {{ msg['created_at'] }}</span>
+            <div class="content">{{ msg['content'] | safe }}</div>
+        </div>
+        {% endfor %}
+
+        {% if not messages %}
+        <p style="color:#666;">No hay mensajes aun.</p>
+        {% endif %}
+
+        <div class="hint">
+            <strong>Hint XSS:</strong> <code>&lt;script&gt;alert('XSS')&lt;/script&gt;</code>
+        </div>
+
+        <p style="margin-top:15px;"><a href="/">Volver al inicio</a></p>
+    </div>
+</body>
+</html>

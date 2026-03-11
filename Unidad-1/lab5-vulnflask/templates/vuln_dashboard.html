@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Dashboard - VulnFlask</title>
+    <style>
+        body { font-family: Arial, sans-serif; background: #1a1a2e; color: #eee; margin: 0; padding: 20px; }
+        .container { max-width: 600px; margin: 50px auto; text-align: center; }
+        h2 { color: #e94560; }
+        .card { background: #16213e; padding: 30px; border-radius: 10px; margin: 20px 0; }
+        .success { background: #2ecc71; color: white; padding: 15px; border-radius: 8px; font-weight: bold; }
+        .info { margin: 15px 0; font-size: 1.1em; }
+        a { color: #e94560; margin: 0 10px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h2>Dashboard</h2>
+        <div class="success">Login exitoso via SQL Injection</div>
+        <div class="card">
+            <div class="info"><strong>Usuario:</strong> {{ user }}</div>
+            <div class="info"><strong>Rol:</strong> {{ role }}</div>
+        </div>
+        <p>
+            <a href="/search">Buscar usuarios</a> |
+            <a href="/messages">Mensajes</a> |
+            <a href="/sysinfo">Info Sistema</a> |
+            <a href="/logout">Cerrar sesion</a>
+        </p>
+        <p><a href="/">Volver al inicio</a></p>
+    </div>
+</body>
+</html>

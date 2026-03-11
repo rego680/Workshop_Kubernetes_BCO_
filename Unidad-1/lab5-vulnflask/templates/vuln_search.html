@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Busqueda - VulnFlask</title>
+    <style>
+        body { font-family: Arial, sans-serif; background: #1a1a2e; color: #eee; margin: 0; padding: 20px; }
+        .container { max-width: 700px; margin: 30px auto; }
+        h2 { color: #e94560; }
+        form { background: #16213e; padding: 20px; border-radius: 10px; display: flex; gap: 10px; }
+        input[type="text"] { flex: 1; padding: 10px; border: 1px solid #0f3460; border-radius: 5px; background: #0f3460; color: #eee; }
+        button { padding: 10px 20px; background: #e94560; color: white; border: none; border-radius: 5px; cursor: pointer; }
+        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+        th { background: #0f3460; padding: 10px; text-align: left; }
+        td { padding: 10px; border-bottom: 1px solid #16213e; }
+        .error { background: #ff6b6b; color: white; padding: 10px; border-radius: 5px; margin-top: 15px; }
+        .hint { background: #0f3460; padding: 10px; border-radius: 5px; margin-top: 15px; font-size: 0.85em; color: #aaa; }
+        .query-display { color: #aaa; margin-top: 10px; }
+        a { color: #e94560; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h2>Busqueda de Usuarios</h2>
+
+        <form method="GET">
+            <input type="text" name="q" value="{{ query }}" placeholder="Buscar usuario...">
+            <button type="submit">Buscar</button>
+        </form>
+
+        {% if query %}
+        <div class="query-display">Buscando: <strong>{{ query | safe }}</strong></div>
+        {% endif %}
+
+        {% if error %}
+        <div class="error">{{ error }}</div>
+        {% endif %}
+
+        {% if results %}
+        <table>
+            <tr><th>ID</th><th>Usuario</th><th>Email</th><th>Rol</th></tr>
+            {% for row in results %}
+            <tr>
+                <td>{{ row[0] }}</td>
+                <td>{{ row[1] }}</td>
+                <td>{{ row[2] }}</td>
+                <td>{{ row[3] }}</td>
+            </tr>
+            {% endfor %}
+        </table>
+        {% endif %}
+
+        <div class="hint">
+            <strong>Hint SQLi:</strong> <code>' UNION SELECT 1,username,password,email FROM users--</code><br>
+            <strong>Hint XSS:</strong> <code>&lt;img src=x onerror=alert(1)&gt;</code>
+        </div>
+
+        <p style="margin-top:15px;"><a href="/">Volver al inicio</a></p>
+    </div>
+</body>
+</html>

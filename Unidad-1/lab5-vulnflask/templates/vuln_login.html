@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Login - VulnFlask</title>
+    <style>
+        body { font-family: Arial, sans-serif; background: #1a1a2e; color: #eee; margin: 0; padding: 20px; }
+        .container { max-width: 400px; margin: 50px auto; }
+        h2 { color: #e94560; text-align: center; }
+        form { background: #16213e; padding: 30px; border-radius: 10px; }
+        label { display: block; margin-top: 15px; font-weight: bold; }
+        input[type="text"], input[type="password"] { width: 100%; padding: 10px; margin-top: 5px; border: 1px solid #0f3460; border-radius: 5px; background: #0f3460; color: #eee; box-sizing: border-box; }
+        button { width: 100%; padding: 12px; margin-top: 20px; background: #e94560; color: white; border: none; border-radius: 5px; font-size: 1em; cursor: pointer; }
+        button:hover { background: #c73e54; }
+        .error { background: #ff6b6b; color: white; padding: 10px; border-radius: 5px; margin-top: 15px; }
+        .hint { background: #0f3460; padding: 10px; border-radius: 5px; margin-top: 15px; font-size: 0.85em; color: #aaa; }
+        a { color: #e94560; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h2>Login - VulnFlask</h2>
+        <form method="POST">
+            <label>Usuario</label>
+            <input type="text" name="username" placeholder="Ingrese usuario" required>
+            <label>Password</label>
+            <input type="password" name="password" placeholder="Ingrese password" required>
+            <button type="submit">Iniciar Sesion</button>
+        </form>
+
+        {% if error %}
+        <div class="error">{{ error }}</div>
+        {% endif %}
+
+        <div class="hint">
+            <strong>Hint:</strong> Intenta: <code>' OR '1'='1' --</code>
+        </div>
+
+        <p style="text-align:center; margin-top:15px;"><a href="/">Volver al inicio</a></p>
+    </div>
+</body>
+</html>
