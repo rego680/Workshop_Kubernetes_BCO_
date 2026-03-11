@@ -22,7 +22,7 @@ En julio de 2019, una ex-empleada de AWS explotó una vulnerabilidad SSRF en un 
 
 ```bash
 kubectl apply -f vulnerable.yaml
-kubectl get pods -n lab2-ssrf -w
+kubectl get pods -n lab1-ssrf -w
 # Esperar a que esté Running (puede tardar ~30s por pip install)
 ```
 
@@ -88,5 +88,5 @@ aws ec2 describe-instances
 ## Cleanup
 
 ```bash
-kubectl delete namespace lab2-ssrf
+kubectl delete namespace lab1-ssrf
 ```
