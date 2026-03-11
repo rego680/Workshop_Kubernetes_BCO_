@@ -1,4 +1,4 @@
-# Lab 4: Pod Privilegiado — Container Escape
+# Lab 4: Pod Privilegiado - Container Escape
 
 ## Objetivo
 
