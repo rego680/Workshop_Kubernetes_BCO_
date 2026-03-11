@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Ping - VulnFlask</title>
+    <style>
+        body { font-family: Arial, sans-serif; background: #1a1a2e; color: #eee; margin: 0; padding: 20px; }
+        .container { max-width: 700px; margin: 30px auto; }
+        h2 { color: #e94560; }
+        form { background: #16213e; padding: 20px; border-radius: 10px; display: flex; gap: 10px; }
+        input[type="text"] { flex: 1; padding: 10px; border: 1px solid #0f3460; border-radius: 5px; background: #0f3460; color: #eee; }
+        button { padding: 10px 20px; background: #e94560; color: white; border: none; border-radius: 5px; cursor: pointer; }
+        .output { background: #0a0a1a; padding: 20px; border-radius: 8px; margin-top: 20px; white-space: pre-wrap; font-family: monospace; font-size: 0.9em; border: 1px solid #16213e; max-height: 400px; overflow-y: auto; }
+        .hint { background: #0f3460; padding: 10px; border-radius: 5px; margin-top: 15px; font-size: 0.85em; color: #aaa; }
+        a { color: #e94560; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h2>Herramienta Ping</h2>
+
+        <form method="POST">
+            <input type="text" name="host" value="{{ host }}" placeholder="Ingrese IP o hostname (ej: 127.0.0.1)">
+            <button type="submit">Ping</button>
+        </form>
+
+        {% if output %}
+        <div class="output">{{ output }}</div>
+        {% endif %}
+
+        <div class="hint">
+            <strong>Hint CMDi:</strong><br>
+            <code>127.0.0.1; whoami</code><br>
+            <code>127.0.0.1; cat /etc/passwd</code><br>
+            <code>127.0.0.1 && ls -la /app</code>
+        </div>
+
+        <p style="margin-top:15px;"><a href="/">Volver al inicio</a></p>
+    </div>
+</body>
+</html>

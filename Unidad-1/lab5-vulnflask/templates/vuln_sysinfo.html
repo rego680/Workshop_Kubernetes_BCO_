@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Info Sistema - VulnFlask</title>
+    <style>
+        body { font-family: Arial, sans-serif; background: #1a1a2e; color: #eee; margin: 0; padding: 20px; }
+        .container { max-width: 800px; margin: 30px auto; }
+        h2 { color: #e94560; }
+        h3 { color: #e94560; margin-top: 25px; }
+        .card { background: #16213e; padding: 15px; border-radius: 8px; margin-bottom: 15px; }
+        .card strong { color: #e94560; }
+        .output { background: #0a0a1a; padding: 15px; border-radius: 8px; white-space: pre-wrap; font-family: monospace; font-size: 0.85em; border: 1px solid #16213e; max-height: 300px; overflow-y: auto; }
+        table { width: 100%; border-collapse: collapse; }
+        th { background: #0f3460; padding: 8px; text-align: left; }
+        td { padding: 8px; border-bottom: 1px solid #0a0a1a; word-break: break-all; }
+        .warning { background: #e94560; color: white; padding: 10px; border-radius: 8px; margin-bottom: 20px; font-weight: bold; text-align: center; }
+        a { color: #e94560; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h2>Informacion del Sistema</h2>
+        <div class="warning">Vulnerabilidad: Information Disclosure - Datos sensibles expuestos</div>
+
+        <div class="card">
+            <p><strong>Hostname:</strong> {{ info.hostname }}</p>
+            <p><strong>IP:</strong> {{ info.ip }}</p>
+            <p><strong>Usuario:</strong> {{ info.user }} (uid={{ info.uid }})</p>
+            <p><strong>Directorio:</strong> {{ info.cwd }}</p>
+            <p><strong>Kernel:</strong> {{ info.kernel }}</p>
+        </div>
+
+        <h3>Variables de Entorno</h3>
+        <div class="output">
+            <table>
+                <tr><th>Variable</th><th>Valor</th></tr>
+                {% for key, value in info.env_vars.items() %}
+                <tr><td>{{ key }}</td><td>{{ value }}</td></tr>
+                {% endfor %}
+            </table>
+        </div>
+
+        <h3>Procesos en ejecucion</h3>
+        <div class="output">{{ info.processes }}</div>
+
+        <p style="margin-top:15px;"><a href="/">Volver al inicio</a></p>
+    </div>
+</body>
+</html>
