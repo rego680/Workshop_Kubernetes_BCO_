@@ -1,0 +1,160 @@
+# ============================================================
+# LAB 3 - Pod generador de trafico HTTP/2 transaccional
+# ============================================================
+# Genera solicitudes POST HTTP/2 simulando transacciones
+# bancarias cada segundo (~30 iteraciones en bucle).
+# El trafico puede ser capturado por el sniffer-pod.
+# ============================================================
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: traffic-generator-code
+  namespace: lab1-caps
+data:
+  traffic_generator.py: |
+    #!/usr/bin/env python3
+    """
+    Generador de trafico HTTP/2 — Simulacion de transacciones bancarias.
+    Envia POST cada segundo con datos transaccionales realistas.
+    """
+
+    import json
+    import time
+    import uuid
+    import logging
+    from datetime import datetime, timezone
+
+    logging.basicConfig(
+        level=logging.INFO,
+        format="%(asctime)s [%(levelname)s] %(message)s",
+        datefmt="%Y-%m-%d %H:%M:%S"
+    )
+    logger = logging.getLogger("traffic-generator")
+
+    TARGET_URL = "http://server.lab.local/api/v1/transactions"
+
+    TRANSACTIONS = [
+        {"src": "1001-0045-8823-0001", "dst": "2050-0078-4412-0093", "amount": 1250.00, "currency": "USD", "desc": "Pago nomina mensual",           "ref": "NOM-2025-001"},
+        {"src": "1001-0045-8823-0002", "dst": "3040-0011-5567-0045", "amount": 89.99,   "currency": "USD", "desc": "Suscripcion plataforma SaaS",    "ref": "SUS-2025-002"},
+        {"src": "1001-0045-8823-0003", "dst": "2050-0078-4412-0101", "amount": 5400.50, "currency": "USD", "desc": "Transferencia a proveedor",       "ref": "PRV-2025-003"},
+        {"src": "1001-0045-8823-0004", "dst": "4080-0099-2233-0012", "amount": 320.75,  "currency": "EUR", "desc": "Pago internacional servicio",     "ref": "INT-2025-004"},
+        {"src": "1001-0045-8823-0005", "dst": "2050-0078-4412-0200", "amount": 15000.00,"currency": "USD", "desc": "Inversion fondo mutuo",           "ref": "INV-2025-005"},
+        {"src": "2050-0078-4412-0093", "dst": "1001-0045-8823-0001", "amount": 430.00,  "currency": "USD", "desc": "Devolucion parcial",              "ref": "DEV-2025-006"},
+        {"src": "3040-0011-5567-0045", "dst": "5060-0022-7788-0034", "amount": 2100.00, "currency": "USD", "desc": "Pago factura #F-2025-112",        "ref": "FAC-2025-007"},
+        {"src": "1001-0045-8823-0006", "dst": "6070-0033-1144-0056", "amount": 750.25,  "currency": "COP", "desc": "Giro nacional Bogota",            "ref": "GIR-2025-008"},
+        {"src": "4080-0099-2233-0012", "dst": "1001-0045-8823-0004", "amount": 128.50,  "currency": "EUR", "desc": "Reembolso cargo duplicado",       "ref": "REM-2025-009"},
+        {"src": "1001-0045-8823-0007", "dst": "7090-0044-6655-0078", "amount": 9800.00, "currency": "USD", "desc": "Pago lease oficina Q1",           "ref": "LEA-2025-010"},
+        {"src": "1001-0045-8823-0008", "dst": "2050-0078-4412-0300", "amount": 67.49,   "currency": "USD", "desc": "Recarga telefonica corporativa",  "ref": "REC-2025-011"},
+        {"src": "5060-0022-7788-0034", "dst": "1001-0045-8823-0009", "amount": 3200.00, "currency": "USD", "desc": "Cobro servicios consultoria",     "ref": "CON-2025-012"},
+        {"src": "1001-0045-8823-0010", "dst": "8010-0055-3322-0089", "amount": 1875.30, "currency": "MXN", "desc": "Transferencia SPEI Mexico",       "ref": "SPE-2025-013"},
+        {"src": "1001-0045-8823-0011", "dst": "2050-0078-4412-0400", "amount": 450.00,  "currency": "USD", "desc": "Donacion fundacion social",       "ref": "DON-2025-014"},
+        {"src": "6070-0033-1144-0056", "dst": "1001-0045-8823-0006", "amount": 12500.00,"currency": "COP", "desc": "Pago nomina empleado",            "ref": "NOM-2025-015"},
+        {"src": "1001-0045-8823-0012", "dst": "9020-0066-9988-0011", "amount": 299.99,  "currency": "USD", "desc": "Licencia software anual",         "ref": "LIC-2025-016"},
+        {"src": "1001-0045-8823-0013", "dst": "2050-0078-4412-0500", "amount": 8750.00, "currency": "USD", "desc": "Pago importacion mercancia",      "ref": "IMP-2025-017"},
+        {"src": "7090-0044-6655-0078", "dst": "1001-0045-8823-0007", "amount": 520.00,  "currency": "USD", "desc": "Devolucion deposito garantia",    "ref": "GAR-2025-018"},
+        {"src": "1001-0045-8823-0014", "dst": "1050-0077-2211-0033", "amount": 4300.00, "currency": "USD", "desc": "Pago tarjeta credito corporativa", "ref": "TDC-2025-019"},
+        {"src": "1001-0045-8823-0015", "dst": "2050-0078-4412-0600", "amount": 175.00,  "currency": "USD", "desc": "Comision servicio bancario",      "ref": "COM-2025-020"},
+        {"src": "8010-0055-3322-0089", "dst": "1001-0045-8823-0010", "amount": 6200.00, "currency": "MXN", "desc": "Pago renta bodega mensual",       "ref": "REN-2025-021"},
+        {"src": "1001-0045-8823-0016", "dst": "3040-0011-5567-0100", "amount": 1100.00, "currency": "USD", "desc": "Seguro empresarial trimestral",   "ref": "SEG-2025-022"},
+        {"src": "1001-0045-8823-0017", "dst": "2050-0078-4412-0700", "amount": 38.50,   "currency": "USD", "desc": "Cargo mantenimiento cuenta",      "ref": "MNT-2025-023"},
+        {"src": "9020-0066-9988-0011", "dst": "1001-0045-8823-0012", "amount": 150.00,  "currency": "USD", "desc": "Credito nota proveedor SW",       "ref": "CRE-2025-024"},
+        {"src": "1001-0045-8823-0018", "dst": "4080-0099-2233-0100", "amount": 22000.00,"currency": "EUR", "desc": "Transferencia SEPA proveedor EU",  "ref": "SEP-2025-025"},
+        {"src": "1001-0045-8823-0019", "dst": "2050-0078-4412-0800", "amount": 670.00,  "currency": "USD", "desc": "Pago publicidad digital",         "ref": "PUB-2025-026"},
+        {"src": "1050-0077-2211-0033", "dst": "1001-0045-8823-0014", "amount": 85.00,   "currency": "USD", "desc": "Cashback programa lealtad",       "ref": "CSH-2025-027"},
+        {"src": "1001-0045-8823-0020", "dst": "5060-0022-7788-0200", "amount": 3950.00, "currency": "USD", "desc": "Honorarios auditoria externa",    "ref": "AUD-2025-028"},
+        {"src": "1001-0045-8823-0021", "dst": "2050-0078-4412-0900", "amount": 12.99,   "currency": "USD", "desc": "Cargo domiciliacion servicio",    "ref": "DOM-2025-029"},
+        {"src": "1001-0045-8823-0022", "dst": "6070-0033-1144-0100", "amount": 7500.00, "currency": "COP", "desc": "Transferencia ACH nacional",      "ref": "ACH-2025-030"},
+    ]
+
+    def build_payload(tx, index):
+        now = datetime.now(timezone.utc)
+        return {
+            "TransactionID": str(uuid.uuid4()),
+            "SourceAccount": tx["src"],
+            "DestinationAccount": tx["dst"],
+            "Amount": tx["amount"],
+            "Currency": tx["currency"],
+            "Date": now.isoformat(),
+            "Description": tx["desc"],
+            "Reference": tx["ref"],
+            "Status": "PENDING",
+            "Channel": "CORE_BANKING",
+            "BatchSequence": index + 1,
+        }
+
+    def main():
+        try:
+            import httpx
+        except ImportError:
+            logger.error("httpx no disponible, instalando...")
+            import subprocess, sys
+            subprocess.check_call([sys.executable, "-m", "pip", "install", "httpx[http2]", "-q"])
+            import httpx
+
+        logger.info("Iniciando generador de trafico HTTP/2")
+        logger.info("Destino: %s", TARGET_URL)
+        logger.info("Transacciones configuradas: %d", len(TRANSACTIONS))
+
+        headers = {
+            "Content-Type": "application/json",
+            "X-Client-ID": "core-banking-v3",
+            "X-Correlation-ID": str(uuid.uuid4()),
+            "Accept": "application/json",
+        }
+
+        while True:
+            for i, tx in enumerate(TRANSACTIONS):
+                payload = build_payload(tx, i)
+                try:
+                    with httpx.Client(http2=True, verify=False, timeout=5.0) as client:
+                        resp = client.post(TARGET_URL, json=payload, headers=headers)
+                    logger.info(
+                        "[%02d/%02d] %s -> %s | %s %.2f | HTTP %d",
+                        i + 1, len(TRANSACTIONS),
+                        tx["src"][-4:], tx["dst"][-4:],
+                        tx["currency"], tx["amount"],
+                        resp.status_code,
+                    )
+                except Exception as e:
+                    logger.warning(
+                        "[%02d/%02d] %s -> %s | %s %.2f | ERROR: %s",
+                        i + 1, len(TRANSACTIONS),
+                        tx["src"][-4:], tx["dst"][-4:],
+                        tx["currency"], tx["amount"],
+                        type(e).__name__,
+                    )
+                time.sleep(1)
+
+            logger.info("Ciclo completado, reiniciando iteracion...")
+
+    if __name__ == "__main__":
+        main()
+
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: traffic-generator
+  namespace: lab1-caps
+  labels:
+    app: traffic-generator
+spec:
+  containers:
+    - name: generator
+      image: python:3.11-slim
+      command:
+        - /bin/bash
+        - -c
+        - |
+          pip install -q httpx[http2] && python /app/traffic_generator.py
+      volumeMounts:
+        - name: code
+          mountPath: /app
+      resources:
+        limits:
+          memory: "128Mi"
+          cpu: "250m"
+  volumes:
+    - name: code
+      configMap:
+        name: traffic-generator-code

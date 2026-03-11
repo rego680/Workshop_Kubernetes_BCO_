@@ -15,6 +15,7 @@ El malware **Hildegard** del grupo TeamTNT usaba capabilities de red en contened
 | Archivo | Descripcion |
 |---------|-------------|
 | `vulnerable-capabilities.yaml` | Backend API + Frontend client + Sniffer con CAP_NET_RAW |
+| `traffic-generator.yaml` | Pod con script Python que genera trafico HTTP/2 transaccional bancario |
 
 ---
 
@@ -22,8 +23,9 @@ El malware **Hildegard** del grupo TeamTNT usaba capabilities de red en contened
 
 ```bash
 kubectl apply -f vulnerable-capabilities.yaml
+kubectl apply -f traffic-generator.yaml
 kubectl get pods -n lab1-caps -w
-# Esperar a que los 3 pods esten Running
+# Esperar a que los 4 pods esten Running
 ```
 
 ## Fase 2: Verificar trafico HTTP en texto plano
@@ -53,10 +55,18 @@ kubectl exec -it -n lab1-caps sniffer-pod -- bash
 ### Paso 2: Capturar trafico HTTP
 
 ```bash
-# Capturar trafico en el puerto 8080 (backend-api)
+# Capturar trafico en el puerto 8080 (backend-api — credenciales login)
 tcpdump -i any -A port 8080 2>/dev/null | grep -E "(password|api_key|token|username)"
 # Esperar ~10 segundos...
 # Debe capturar: {"username":"admin@empresa.com","password":"Sup3rS3cr3t!","api_key":"sk-live-abcdef123456"}
+```
+
+### Paso 2b: Capturar trafico HTTP/2 transaccional
+
+```bash
+# Capturar trafico del traffic-generator (transacciones bancarias)
+tcpdump -i any -A 2>/dev/null | grep -E "(SourceAccount|DestinationAccount|Amount|TransactionID)"
+# Debe capturar datos de transacciones bancarias con cuentas, montos y referencias
 ```
 
 ### Paso 3: Captura mas detallada
