@@ -1,4 +1,4 @@
-# Lab 2 - JSON Web Token (JWT)
+# Lab 1 - JSON Web Token (JWT)
 
 ## ¿Qué es un JWT?
 
