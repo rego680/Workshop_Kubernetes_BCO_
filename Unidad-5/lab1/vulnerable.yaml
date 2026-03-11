@@ -105,6 +105,123 @@ data:
         server.serve_forever()
 
 ---
+# --- ConfigMap con el simulador de IMDS (fake metadata service) ---
+# Simula el Instance Metadata Service de AWS (169.254.169.254)
+# para que el lab funcione en entornos locales (minikube, kind, etc.)
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: fake-imds-code
+  namespace: lab1-ssrf
+data:
+  imds.py: |
+    from http.server import HTTPServer, BaseHTTPRequestHandler
+    import json
+    import datetime
+
+    # Datos simulados del IMDS de AWS
+    METADATA = {
+        "/latest/meta-data/": "ami-id\nami-launch-index\nhostname\ninstance-id\ninstance-type\nlocal-ipv4\npublic-ipv4\niam/\nsecurity-groups\nplacement/",
+        "/latest/meta-data/ami-id": "ami-0abcdef1234567890",
+        "/latest/meta-data/instance-id": "i-0a1b2c3d4e5f67890",
+        "/latest/meta-data/instance-type": "m5.xlarge",
+        "/latest/meta-data/hostname": "ip-172-31-16-42.ec2.internal",
+        "/latest/meta-data/local-ipv4": "172.31.16.42",
+        "/latest/meta-data/public-ipv4": "54.123.45.67",
+        "/latest/meta-data/security-groups": "production-web-sg",
+        "/latest/meta-data/placement/": "availability-zone\nregion",
+        "/latest/meta-data/placement/availability-zone": "us-east-1a",
+        "/latest/meta-data/placement/region": "us-east-1",
+        "/latest/meta-data/iam/": "info\nsecurity-credentials/",
+        "/latest/meta-data/iam/info": json.dumps({
+            "Code": "Success",
+            "InstanceProfileArn": "arn:aws:iam::123456789012:instance-profile/production-eks-node-role",
+            "InstanceProfileId": "AIPA1234567890EXAMPLE"
+        }, indent=2),
+        "/latest/meta-data/iam/security-credentials/": "production-eks-node-role",
+        "/latest/meta-data/iam/security-credentials/production-eks-node-role": json.dumps({
+            "Code": "Success",
+            "LastUpdated": "2024-01-15T12:30:00Z",
+            "Type": "AWS-HMAC",
+            "AccessKeyId": "AKIA3EXAMPLE7890FAKE",
+            "SecretAccessKey": "wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY",
+            "Token": "FwoGZXIvYXdzEBAaDFakeTokenForDemoOnly...==",
+            "Expiration": "2024-01-15T18:30:00Z"
+        }, indent=2),
+    }
+
+    class IMDSHandler(BaseHTTPRequestHandler):
+        def do_GET(self):
+            path = self.path
+            if path in METADATA:
+                self.send_response(200)
+                self.send_header("Content-Type", "text/plain")
+                self.end_headers()
+                self.wfile.write(METADATA[path].encode())
+            else:
+                self.send_response(404)
+                self.send_header("Content-Type", "text/plain")
+                self.end_headers()
+                self.wfile.write(b"Not Found")
+
+        def log_message(self, format, *args):
+            print(f"[IMDS] {args[0]}")
+
+    if __name__ == "__main__":
+        server = HTTPServer(("0.0.0.0", 80), IMDSHandler)
+        print("Fake IMDS running on port 80")
+        server.serve_forever()
+
+---
+# --- Deployment del simulador IMDS ---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: fake-imds
+  namespace: lab1-ssrf
+  labels:
+    app: fake-imds
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: fake-imds
+  template:
+    metadata:
+      labels:
+        app: fake-imds
+    spec:
+      containers:
+        - name: imds
+          image: python:3.11-slim
+          imagePullPolicy: IfNotPresent
+          command: ["python", "/app/imds.py"]
+          ports:
+            - containerPort: 80
+          volumeMounts:
+            - name: imds-code
+              mountPath: /app
+      volumes:
+        - name: imds-code
+          configMap:
+            name: fake-imds-code
+
+---
+# --- Service del simulador IMDS ---
+# Nombre DNS interno: fake-imds.lab1-ssrf.svc.cluster.local
+apiVersion: v1
+kind: Service
+metadata:
+  name: fake-imds
+  namespace: lab1-ssrf
+spec:
+  selector:
+    app: fake-imds
+  ports:
+    - port: 80
+      targetPort: 80
+
+---
 # --- Deployment vulnerable ---
 apiVersion: apps/v1
 kind: Deployment

