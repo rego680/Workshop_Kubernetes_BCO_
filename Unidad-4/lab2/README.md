@@ -1,4 +1,4 @@
-# Lab 1: Token de ServiceAccount Expuesto
+# Lab 2: Token de ServiceAccount Expuesto
 
 ## Objetivo
 
