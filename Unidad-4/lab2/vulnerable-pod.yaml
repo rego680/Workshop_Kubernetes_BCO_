@@ -7,6 +7,7 @@
 #
 # Ejecutar:
 #   kubectl apply -f vulnerable-pod.yaml
+#   kubectl apply -f secrets-lab.yaml
 #   kubectl apply -f role-binding-vulnerable.yaml
 #   kubectl exec -it app-vulnerable -n lab1-token -- bash
 #   # Dentro del pod:

